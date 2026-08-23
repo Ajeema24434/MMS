@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal — Mentor–Mentee Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #printable-report, #printable-report * { visibility: visible; }
+            #printable-report { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-900 flex font-sans">
+
+    <!-- FIXED LEFT SIDEBAR (Navy / Dark Blue) -->
+    <aside class="w-64 bg-slate-900 text-white min-h-screen flex flex-col fixed left-0 top-0 bottom-0 z-40 border-r border-slate-800 shadow-xl">
+        
+        <!-- App Title & Logo -->
+        <div class="p-6 border-b border-slate-800 flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white text-lg shadow-lg shadow-blue-500/30">
+                MMS
+            </div>
+            <div>
+                <h1 class="font-extrabold text-sm tracking-tight text-white">Mentor–Mentee</h1>
+                <p class="text-[10px] text-blue-400 font-semibold tracking-wider uppercase">Student Portal</p>
+            </div>
+        </div>
+
+        <!-- Navigation Menu Items -->
+        <nav class="flex-1 px-3 py-6 space-y-1 text-xs font-medium">
+            <a href="#" data-view="dashboard" class="sidebar-nav-item active flex items-center px-4 py-3 rounded-xl bg-blue-600 text-white transition">
+                <span class="font-semibold">Dashboard</span>
+            </a>
+            <a href="#" data-view="profile" class="sidebar-nav-item flex items-center px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+                <span>My Profile</span>
+            </a>
+            <a href="#" data-view="academic" class="sidebar-nav-item flex items-center px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+                <span>Academic Details</span>
+            </a>
+            <a href="#" data-view="activities" class="sidebar-nav-item flex items-center px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+                <span>My Activities</span>
+            </a>
+            <a href="#" data-view="meetings" class="sidebar-nav-item flex items-center px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+                <span>My Meetings</span>
+            </a>
+            <a href="#" data-view="complaints" class="sidebar-nav-item flex items-center px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+                <span>Complaints</span>
+            </a>
+            <a href="#" data-view="report" class="sidebar-nav-item flex items-center px-4 py-3 rounded-xl text-amber-300 hover:bg-slate-800 transition border border-amber-500/20 bg-amber-500/10">
+                <span class="font-bold">My Complete Report</span>
+            </a>
+            <a href="#" data-view="notifications" class="sidebar-nav-item flex items-center px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 transition">
+                <span>Notifications</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer / Logout -->
+        <div class="p-4 border-t border-slate-800">
+            <button id="logout-btn" class="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition flex items-center justify-center">
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="flex-1 ml-64 min-h-screen flex flex-col">
+        
+        <!-- TOP HEADER BAR -->
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-8 h-16 flex items-center justify-between shadow-sm">
+            <h2 class="text-lg font-extrabold text-slate-900 tracking-tight">Welcome back, <span class="st-val-name text-blue-600">Student</span>!</h2>
+            
+            <div class="flex items-center space-x-3 text-xs">
+                <div class="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs">
+                    ST
+                </div>
+                <div class="text-left hidden sm:block">
+                    <p class="st-val-name font-bold text-slate-900 text-xs">Aarav Patel</p>
+                    <p class="text-[10px] text-slate-500 font-mono">Roll: <span id="st-val-roll">CSE-01</span></p>
+                </div>
+            </div>
+        </header>
+
+        <!-- PORTAL VIEWS CONTAINER -->
+        <main class="flex-1 p-8 space-y-6">
+
+            <!-- ================= VIEW 1: DASHBOARD ================= -->
+            <div id="view-dashboard" class="portal-view space-y-6 animate-fade-in">
+                
+                <!-- Student Profile Bar -->
+                <div class="shadcn-card p-6 bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950 text-white border border-blue-900/60 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white font-black text-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                            ST
+                        </div>
+                        <div class="space-y-1">
+                            <h3 class="text-xl font-bold tracking-tight text-white st-val-name">Student Name</h3>
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300 font-mono">
+                                <span>Roll: <strong id="st-val-roll-bar" class="text-white">CSE-01</strong></span>
+                                <span>URN: <strong id="st-val-urn-bar" class="text-white">URN2024001</strong></span>
+                                <span>Div: <strong id="st-val-div-bar" class="text-white">A</strong></span>
+                                <span>Sem: <strong id="st-val-sem-bar" class="text-white">5</strong></span>
+                                <span>Batch: <strong id="st-val-batch-bar" class="text-blue-400">CSE-2024-A</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/10 text-xs">
+                        <span class="text-slate-400 uppercase font-semibold text-[10px] block">Assigned Faculty Mentor</span>
+                        <strong id="st-val-mentor" class="text-sm font-bold text-amber-300">Dr. Ramesh Sharma</strong>
+                    </div>
+                </div>
+
+                <!-- 6 SUMMARY CARDS -->
+                <div class="grid grid-cols-2 lg:grid-cols-6 gap-4">
+                    
+                    <div class="p-4 bg-blue-50/70 border border-blue-100 rounded-xl space-y-1 shadow-sm">
+                        <p class="text-[10px] font-bold text-blue-900 uppercase tracking-wider">Attendance</p>
+                        <h4 id="card-attendance" class="text-xl font-black text-blue-700">82.45%</h4>
+                        <span class="text-[10px] text-emerald-600 font-medium">Above Threshold</span>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 border border-blue-100 rounded-xl space-y-1 shadow-sm">
+                        <p class="text-[10px] font-bold text-blue-900 uppercase tracking-wider">Avg Marks</p>
+                        <h4 id="card-marks" class="text-xl font-black text-blue-700">74.20%</h4>
+                        <span class="text-[10px] text-blue-600 font-medium">Consistent</span>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 border border-blue-100 rounded-xl space-y-1 shadow-sm">
+                        <p class="text-[10px] font-bold text-blue-900 uppercase tracking-wider">Academic Progress</p>
+                        <h4 id="card-progress" class="text-xl font-black text-emerald-600">Good</h4>
+                        <span class="text-[10px] text-slate-500 font-medium">Clear Status</span>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 border border-blue-100 rounded-xl space-y-1 shadow-sm">
+                        <p class="text-[10px] font-bold text-blue-900 uppercase tracking-wider">Meetings Attended</p>
+                        <h4 id="card-meetings" class="text-xl font-black text-blue-700">5/6</h4>
+                        <span class="text-[10px] text-slate-500 font-medium">83.3% Rate</span>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 border border-blue-100 rounded-xl space-y-1 shadow-sm">
+                        <p class="text-[10px] font-bold text-blue-900 uppercase tracking-wider">Pending Activities</p>
+                        <h4 id="card-activities" class="text-xl font-black text-amber-600">2</h4>
+                        <span class="text-[10px] text-amber-600 font-medium">Awaiting Verification</span>
+                    </div>
+
+                    <div class="p-4 bg-blue-50/70 border border-blue-100 rounded-xl space-y-1 shadow-sm">
+                        <p class="text-[10px] font-bold text-blue-900 uppercase tracking-wider">Complaints</p>
+                        <h4 id="card-complaints" class="text-xl font-black text-indigo-700">1 In Progress</h4>
+                        <span class="text-[10px] text-indigo-600 font-medium">Faculty Reviewing</span>
+                    </div>
+
+                </div>
+
+                <!-- Academic Overview & Upcoming Meeting Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Subject-Wise Bar Overview -->
+                    <div class="lg:col-span-2 shadcn-card p-6 space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm uppercase tracking-wider">ACADEMIC OVERVIEW</h3>
+                                <p class="text-xs text-slate-500">Subject-wise performance summary (Current Semester)</p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded border border-blue-100">Semester 5</span>
+                        </div>
+
+                        <div id="subject-bars-container" class="space-y-3 pt-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Upcoming Meeting Card -->
+                    <div class="shadcn-card p-6 flex flex-col justify-between space-y-4 bg-white">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold uppercase rounded border border-blue-200">UPCOMING MEETING</span>
+                                <span id="um-number" class="text-xs font-mono font-bold text-slate-500">Meeting #2</span>
+                            </div>
+                            <h4 id="um-agenda" class="font-bold text-slate-900 text-base">Mid-Term Progress Review & Guidance</h4>
+                            
+                            <div class="space-y-1 text-xs text-slate-600 pt-2 border-t border-slate-100 font-mono">
+                                <p>Date: <span id="um-date">Aug 28, 2024 - 2:00 PM</span></p>
+                                <p>Venue: <span id="um-mode">Offline / Lab 4</span></p>
+                            </div>
+                        </div>
+
+                        <button onclick="document.querySelector('[data-view=meetings]').click()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg shadow transition">
+                            View Meeting Details
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- Recent Mentor Advice & Notifications Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- Recent Mentor Advice -->
+                    <div class="shadcn-card p-6 space-y-3">
+                        <h3 class="font-bold text-slate-900 text-sm uppercase tracking-wider border-b border-slate-100 pb-2">RECENT MENTOR ADVICE</h3>
+                        <div class="p-4 bg-amber-50/80 rounded-xl border border-amber-200/80 text-xs text-amber-950 space-y-2">
+                            <div class="flex items-center space-x-2 font-bold text-amber-900">
+                                <span>Faculty Observation:</span>
+                            </div>
+                            <p id="recent-advice-text" class="leading-relaxed">
+                                Focus on DBMS lab assignments and complete NPTEL credits before end-sem exams. Attendance threshold must be maintained above 75%.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Notifications -->
+                    <div class="shadcn-card p-6 space-y-3">
+                        <h3 class="font-bold text-slate-900 text-sm uppercase tracking-wider border-b border-slate-100 pb-2">RECENT NOTIFICATIONS</h3>
+                        <div id="dashboard-notifications-list" class="space-y-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ================= VIEW 2: MY PROFILE ================= -->
+            <div id="view-profile" class="portal-view hidden space-y-6 animate-fade-in">
+                <div class="shadcn-card p-6 space-y-6">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">My Student Profile</h2>
+                            <p class="text-xs text-slate-500">Official academic credentials and editable personal contact info</p>
+                        </div>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded border border-slate-200">Official Record</span>
+                    </div>
+
+                    <form id="profile-edit-form" class="space-y-6">
+                        <!-- Personal Information -->
+                        <div>
+                            <h3 class="text-xs font-extrabold text-blue-900 uppercase tracking-wider mb-3">Personal Information</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <label class="block font-semibold text-slate-500 uppercase text-[10px] mb-1">Full Name (Read Only)</label>
+                                    <p id="prof-name" class="p-2.5 bg-slate-100 rounded border border-slate-200 font-bold text-slate-900">Aarav Patel</p>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-500 uppercase text-[10px] mb-1">Roll Number (Read Only)</label>
+                                    <p id="prof-roll" class="p-2.5 bg-slate-100 rounded border border-slate-200 font-mono font-bold text-slate-900">CSE-01</p>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-500 uppercase text-[10px] mb-1">URN (Read Only)</label>
+                                    <p id="prof-urn" class="p-2.5 bg-slate-100 rounded border border-slate-200 font-mono font-bold text-slate-900">URN2024001</p>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-500 uppercase text-[10px] mb-1">Division & Semester (Read Only)</label>
+                                    <p class="p-2.5 bg-slate-100 rounded border border-slate-200 font-bold text-slate-900">Div <span id="prof-div">A</span> • Sem <span id="prof-sem">5</span> (<span id="prof-batch">CSE-2024-A</span>)</p>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-blue-900 uppercase text-[10px] mb-1">Email Address (Permitted to Edit)</label>
+                                    <input type="email" id="prof-email" value="aarav.patel@student.mms.edu" class="w-full p-2.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-blue-900 uppercase text-[10px] mb-1">Mobile Number (Permitted to Edit)</label>
+                                    <input type="text" id="prof-phone" value="9876543201" class="w-full p-2.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mentor Information -->
+                        <div>
+                            <h3 class="text-xs font-extrabold text-blue-900 uppercase tracking-wider mb-3">Assigned Mentor Information</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <label class="block font-semibold text-slate-500 uppercase text-[10px] mb-1">Faculty Mentor Name</label>
+                                    <p id="prof-m-name" class="p-2.5 bg-slate-100 rounded border border-slate-200 font-bold text-slate-900">Dr. Ramesh Sharma</p>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-500 uppercase text-[10px] mb-1">Department</label>
+                                    <p id="prof-m-dept" class="p-2.5 bg-slate-100 rounded border border-slate-200 font-bold text-slate-900">Computer Engineering</p>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-500 uppercase text-[10px] mb-1">Official Email</label>
+                                    <p id="prof-m-email" class="p-2.5 bg-slate-100 rounded border border-slate-200 font-medium text-slate-900">ramesh.sharma@mms.edu</p>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-500 uppercase text-[10px] mb-1">College Mentor ID</label>
+                                    <p id="prof-m-code" class="p-2.5 bg-slate-100 rounded border border-slate-200 font-mono font-bold text-slate-900">MNT101</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex justify-end">
+                            <button type="submit" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg shadow transition">
+                                Save Profile Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 3: ACADEMIC DETAILS ================= -->
+            <div id="view-academic" class="portal-view hidden space-y-6 animate-fade-in">
+                <div class="shadcn-card overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Academic Marks & Attendance Details</h2>
+                            <p class="text-xs text-slate-500">Official semester evaluation records from central exam cell</p>
+                        </div>
+                        <span class="px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded font-semibold text-xs">Read-Only Official Records</span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                    <th class="px-6 py-3">Subject Name</th>
+                                    <th class="px-6 py-3">Internal Marks (ISE)</th>
+                                    <th class="px-6 py-3">Exam Marks (ESE)</th>
+                                    <th class="px-6 py-3">Total Marks</th>
+                                    <th class="px-6 py-3">Grade</th>
+                                </tr>
+                            </thead>
+                            <tbody id="academic-table-tbody">
+                                <tr><td colspan="5" class="px-6 py-8 text-center text-slate-400 text-sm">Loading academic records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Summary Stats Footer -->
+                    <div class="p-6 bg-slate-50 border-t border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div class="p-3 bg-white rounded-lg border border-slate-200">
+                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Overall Attendance</span>
+                            <h4 id="acad-overall-attendance" class="text-xl font-extrabold text-blue-700 mt-0.5">82.45%</h4>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg border border-slate-200">
+                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Subjects Below Required Attendance</span>
+                            <h4 id="acad-below-attendance" class="text-xl font-extrabold text-emerald-600 mt-0.5">0 Subjects</h4>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg border border-slate-200">
+                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Academic Performance Summary</span>
+                            <h4 id="acad-overall-performance" class="text-xl font-extrabold text-slate-900 mt-0.5">Good Progress</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 4: MY ACTIVITIES ================= -->
+            <div id="view-activities" class="portal-view hidden space-y-6 animate-fade-in">
+                <div class="shadcn-card p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Co-Curricular & Certified Activities</h2>
+                            <p class="text-xs text-slate-500">Submit certificates for NPTEL, Internships, Workshops, Sports & NSS</p>
+                        </div>
+                        <button onclick="openActivityModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow transition">
+                            + Add New Activity
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                    <th class="px-6 py-3">Activity Name</th>
+                                    <th class="px-6 py-3">Category</th>
+                                    <th class="px-6 py-3">Date</th>
+                                    <th class="px-6 py-3">Evidence</th>
+                                    <th class="px-6 py-3">Status</th>
+                                    <th class="px-6 py-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activities-table-tbody">
+                                <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400 text-sm">Loading activities...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 5: MY MEETINGS ================= -->
+            <div id="view-meetings" class="portal-view hidden space-y-6 animate-fade-in">
+                <div class="shadcn-card p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Mentoring Meetings</h2>
+                            <p class="text-xs text-slate-500">Meetings assigned by your batch mentor</p>
+                        </div>
+                    </div>
+
+                    <!-- Meeting Tabs -->
+                    <div class="border-b border-slate-200 flex space-x-4 text-xs font-semibold">
+                        <button class="meeting-tab-btn active border-b-2 border-blue-600 text-blue-600 pb-2" data-meeting-tab="upcoming">Upcoming Meetings</button>
+                        <button class="meeting-tab-btn text-slate-500 pb-2" data-meeting-tab="past">Past Meetings</button>
+                    </div>
+
+                    <!-- Upcoming Meetings Table -->
+                    <div id="meetings-tab-upcoming">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                        <th class="px-6 py-3">Meeting No.</th>
+                                        <th class="px-6 py-3">Date & Time</th>
+                                        <th class="px-6 py-3">Mode</th>
+                                        <th class="px-6 py-3">Agenda</th>
+                                        <th class="px-6 py-3">Status</th>
+                                        <th class="px-6 py-3">Attendance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="meetings-upcoming-tbody">
+                                    <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400 text-sm">Loading meetings...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Past Meetings Table -->
+                    <div id="meetings-tab-past" class="hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                        <th class="px-6 py-3">Meeting No.</th>
+                                        <th class="px-6 py-3">Date & Time</th>
+                                        <th class="px-6 py-3">Mode</th>
+                                        <th class="px-6 py-3">Agenda</th>
+                                        <th class="px-6 py-3">Status</th>
+                                        <th class="px-6 py-3">Attendance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="meetings-past-tbody">
+                                    <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400 text-sm">Loading meetings...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ================= VIEW 6: COMPLAINTS ================= -->
+            <div id="view-complaints" class="portal-view hidden space-y-6 animate-fade-in">
+                <div class="shadcn-card p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Complaints & Grievances</h2>
+                            <p class="text-xs text-slate-500">Submit requests directly to your faculty mentor</p>
+                        </div>
+                        <button onclick="openComplaintModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow transition">
+                            + New Complaint
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                    <th class="px-6 py-3">Complaint ID</th>
+                                    <th class="px-6 py-3">Category</th>
+                                    <th class="px-6 py-3">Description</th>
+                                    <th class="px-6 py-3">Date</th>
+                                    <th class="px-6 py-3">Status</th>
+                                    <th class="px-6 py-3">Mentor Response</th>
+                                    <th class="px-6 py-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="complaints-table-tbody">
+                                <tr><td colspan="7" class="px-6 py-8 text-center text-slate-400 text-sm">Loading complaints...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 7: MY COMPLETE REPORT ================= -->
+            <div id="view-report" class="portal-view hidden space-y-6 animate-fade-in">
+                <div class="shadcn-card p-8 bg-gradient-to-r from-blue-900 to-indigo-950 text-white border border-blue-900 space-y-4 shadow-xl">
+                    <div class="space-y-2">
+                        <span class="px-3 py-1 bg-amber-400 text-slate-950 font-black text-[10px] uppercase tracking-wider rounded">Report Generation</span>
+                        <h2 class="text-2xl font-extrabold">Generate Your Complete Report</h2>
+                        <p class="text-xs text-blue-200 leading-relaxed max-w-2xl">
+                            This report contains your academic performance, attendance, activities, meetings, mentor observations and overall progress collected directly from the database.
+                        </p>
+                    </div>
+
+                    <div class="pt-2">
+                        <button onclick="generateStudentCompleteReport()" class="px-8 py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg transition flex items-center space-x-2">
+                            <span>GENERATE COMPLETE REPORT</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 8: NOTIFICATIONS ================= -->
+            <div id="view-notifications" class="portal-view hidden space-y-6 animate-fade-in">
+                <div class="shadcn-card p-6 space-y-4">
+                    <div class="border-b border-slate-200 pb-4">
+                        <h2 class="text-xl font-bold text-slate-900">Notifications & Activity Feed</h2>
+                        <p class="text-xs text-slate-500">Real-time updates regarding activities, meetings, and faculty responses</p>
+                    </div>
+
+                    <div id="full-notifications-list" class="space-y-3">
+                        <p class="text-xs text-slate-400">Loading notifications...</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- MODAL 1: ADD ACTIVITY MODAL -->
+    <div id="activity-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-lg">Add New Activity</h3>
+                <button onclick="closeActivityModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            </div>
+
+            <form id="activity-form" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Activity Name</label>
+                    <input type="text" id="act-title" required placeholder="e.g. NPTEL Cloud Computing Certification" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Category</label>
+                    <select id="act-category" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="NPTEL">NPTEL</option>
+                        <option value="Internship">Internship</option>
+                        <option value="Training">Training</option>
+                        <option value="Workshop">Workshop</option>
+                        <option value="Seminar">Seminar</option>
+                        <option value="Software / Certification">Software / Certification</option>
+                        <option value="Sports">Sports</option>
+                        <option value="NSS">NSS</option>
+                        <option value="Cultural">Cultural</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Date Achieved</label>
+                    <input type="date" id="act-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Description</label>
+                    <textarea id="act-desc" rows="2" placeholder="Brief details about the achievement..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Certificate Evidence Upload (Filename)</label>
+                    <input type="text" id="act-evidence" placeholder="certificate_cloud.pdf" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="pt-2 flex space-x-2">
+                    <button type="button" onclick="closeActivityModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200">Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-blue-600 text-white font-semibold text-sm rounded-lg hover:bg-blue-500">Submit Activity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ADD COMPLAINT MODAL -->
+    <div id="complaint-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-lg">Submit Complaint / Query</h3>
+                <button onclick="closeComplaintModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            </div>
+
+            <form id="complaint-form" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Category</label>
+                    <select id="cmp-category" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="Academic">Academic</option>
+                        <option value="Infrastructure">Infrastructure</option>
+                        <option value="Personal">Personal / Counseling</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Subject / Title</label>
+                    <input type="text" id="cmp-title" required placeholder="e.g. Difficulty in DBMS Lab sessions" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Description</label>
+                    <textarea id="cmp-desc" rows="3" required placeholder="Describe your issue..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+
+                <div class="pt-2 flex space-x-2">
+                    <button type="button" onclick="closeComplaintModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200">Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-blue-600 text-white font-semibold text-sm rounded-lg hover:bg-blue-500">Submit Complaint</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: GENERATED COMPLETE REPORT MODAL -->
+    <div id="report-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-4xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in my-8 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3 flex-shrink-0">
+                <h3 class="font-bold text-slate-900 text-lg">Official Student Complete Report</h3>
+                <div class="flex items-center space-x-2">
+                    <button onclick="printStudentReport()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow">Print / Download PDF</button>
+                    <button onclick="document.getElementById('report-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-lg px-2">✕</button>
+                </div>
+            </div>
+
+            <div id="report-modal-content" class="overflow-y-auto flex-1 space-y-4 p-2">
+                <!-- Report populated dynamically via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/auth.js"></script>
+    <script src="/assets/js/student.js"></script>
+    <script>
+        function openActivityModal() { document.getElementById('activity-modal').classList.remove('hidden'); }
+        function closeActivityModal() { document.getElementById('activity-modal').classList.add('hidden'); }
+
+        function openComplaintModal() { document.getElementById('complaint-modal').classList.remove('hidden'); }
+        function closeComplaintModal() { document.getElementById('complaint-modal').classList.add('hidden'); }
+
+        // Submit Profile Changes
+        document.getElementById('profile-edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                email: document.getElementById('prof-email').value.trim(),
+                phone: document.getElementById('prof-phone').value.trim()
+            };
+            const res = await API.put('/student/profile', body);
+            if (res.success) {
+                alert('Personal details updated successfully!');
+            } else {
+                alert(res.message || 'Error updating profile.');
+            }
+        });
+
+        // Submit Activity
+        document.getElementById('activity-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                title: document.getElementById('act-title').value.trim(),
+                category: document.getElementById('act-category').value,
+                date_achieved: document.getElementById('act-date').value,
+                description: document.getElementById('act-desc').value.trim(),
+                evidence_url: document.getElementById('act-evidence').value.trim() || 'certificate.pdf'
+            };
+            const res = await API.post('/student/activities', body);
+            if (res.success) {
+                closeActivityModal();
+                loadStudentDashboardData();
+            } else {
+                alert(res.message || 'Error submitting activity.');
+            }
+        });
+
+        // Submit Complaint
+        document.getElementById('complaint-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                title: document.getElementById('cmp-title').value.trim(),
+                category: document.getElementById('cmp-category').value,
+                description: document.getElementById('cmp-desc').value.trim()
+            };
+            const res = await API.post('/student/complaints', body);
+            if (res.success) {
+                closeComplaintModal();
+                loadStudentDashboardData();
+            } else {
+                alert(res.message || 'Error submitting complaint.');
+            }
+        });
+    </script>
+</body>
+</html>
