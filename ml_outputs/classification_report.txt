@@ -1,0 +1,18 @@
+MENTOR INSIGHT — LOGISTIC REGRESSION CLASSIFICATION REPORT
+============================================================
+Dataset: mentor_insight_student_risk_synthetic.csv (600 rows)
+Test Set Size: 120 samples (20% stratified)
+Model: Scikit-learn Pipeline [SimpleImputer -> StandardScaler -> LogisticRegression]
+============================================================
+
+              precision    recall  f1-score   support
+
+        Weak     0.8462    0.9167    0.8800        36
+     Average     0.7500    0.6977    0.7229        43
+      Bright     0.8049    0.8049    0.8049        41
+
+    accuracy                         0.8000       120
+   macro avg     0.8003    0.8064    0.8026       120
+weighted avg     0.7976    0.8000    0.7980       120
+
+Multiclass ROC-AUC (OVR Macro): 0.9292

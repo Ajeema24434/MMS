@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard — Mentor-Mentee Portal</title>
+    <title>Admin Dashboard — AI & DS Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
@@ -14,22 +14,22 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <span class="font-bold text-base tracking-tight">Mentor-Mentee System</span>
-                <span class="bg-indigo-500/20 text-indigo-300 text-[10px] px-2.5 py-0.5 rounded-full border border-indigo-500/30 font-semibold uppercase">ADMIN</span>
+                <span class="bg-indigo-500/20 text-indigo-300 text-[10px] px-2.5 py-0.5 rounded-full border border-indigo-500/30 font-semibold uppercase">AI & DS ADMIN</span>
             </div>
             
             <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
                 <a href="/admin/dashboard.html" class="text-indigo-400 font-semibold border-b-2 border-indigo-500 py-5">Dashboard</a>
                 <a href="/admin/mentors.html" class="text-slate-300 hover:text-white py-5">Mentors</a>
                 <a href="/admin/students.html" class="text-slate-300 hover:text-white py-5">Students</a>
-                <a href="/admin/batches.html" class="text-slate-300 hover:text-white py-5">Batches</a>
+                <a href="/admin/batches.html" class="text-slate-300 hover:text-white py-5">Divisions & Batches</a>
             </nav>
 
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
                 <div class="text-right hidden sm:block">
                     <p id="header-user-name" class="text-xs font-semibold text-white">System Admin</p>
-                    <p id="header-user-role" class="text-[10px] text-slate-400 font-mono">ADMIN</p>
+                    <p id="header-user-role" class="text-[10px] text-indigo-400 font-mono">AI & DS</p>
                 </div>
-                <button id="logout-btn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg border border-slate-700 transition">
+                <button id="logout-btn" class="px-3 py-1.5 bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-xs font-semibold rounded-lg border border-rose-700/60 transition">
                     Logout
                 </button>
             </div>
@@ -42,52 +42,78 @@
         <!-- Welcome Banner -->
         <div class="shadcn-card p-6 bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-indigo-900/60">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight">Admin Overview</h1>
-                <p class="text-indigo-200 text-xs mt-1">Manage academic batches, assign faculty mentors, and monitor student distributions.</p>
+                <span class="px-2.5 py-0.5 bg-indigo-500/30 text-indigo-300 text-[10px] font-bold rounded uppercase tracking-wider border border-indigo-400/30">AI & DS Department</span>
+                <h1 class="text-2xl font-bold tracking-tight mt-1">Academic Administration Console</h1>
             </div>
             <div class="flex flex-wrap gap-2">
-                <a href="/admin/mentors.html" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow transition">Manage Mentors</a>
+                <button onclick="openAdminDashboardCredentialsModal()" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold rounded-lg shadow transition flex items-center space-x-1.5">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>Download Credentials PDF</span>
+                </button>
+                <a href="/admin/batches.html" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow transition">+ Manage Divisions & Batches</a>
                 <a href="/admin/students.html" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg shadow border border-slate-700 transition">Manage Students</a>
             </div>
         </div>
 
         <!-- Metric Stat Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             
             <!-- Total Students -->
-            <div class="shadcn-card p-6 flex items-center justify-between">
+            <div class="shadcn-card p-5 flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Mentees</p>
-                    <h3 id="stat-total-students" class="text-3xl font-extrabold text-slate-900 mt-2">--</h3>
-                    <p class="text-[11px] text-emerald-600 font-medium mt-1">Active student records</p>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">AI & DS Mentees</p>
+                    <h3 id="stat-total-students" class="text-2xl font-extrabold text-slate-900 mt-1">--</h3>
+                    <p class="text-[11px] text-emerald-600 font-medium mt-1">Enrolled student records</p>
                 </div>
-                <div class="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-extrabold font-mono">
+                <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-extrabold font-mono">
                     STU
                 </div>
             </div>
 
             <!-- Total Mentors -->
-            <div class="shadcn-card p-6 flex items-center justify-between">
+            <div class="shadcn-card p-5 flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Mentors</p>
-                    <h3 id="stat-total-mentors" class="text-3xl font-extrabold text-slate-900 mt-2">--</h3>
-                    <p class="text-[11px] text-indigo-600 font-medium mt-1">Faculty advisors assigned</p>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Faculty Mentors</p>
+                    <h3 id="stat-total-mentors" class="text-2xl font-extrabold text-slate-900 mt-1">--</h3>
+                    <p class="text-[11px] text-indigo-600 font-medium mt-1">AI & DS Faculty</p>
                 </div>
-                <div class="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 text-xs font-extrabold font-mono">
+                <div class="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 text-xs font-extrabold font-mono">
                     FAC
                 </div>
             </div>
 
-            <!-- Total Batches -->
-            <div class="shadcn-card p-6 flex items-center justify-between">
+            <!-- Total Divisions -->
+            <div class="shadcn-card p-5 flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Batches</p>
-                    <h3 id="stat-total-batches" class="text-3xl font-extrabold text-slate-900 mt-2">--</h3>
-                    <p class="text-[11px] text-amber-600 font-medium mt-1">Active academic groups</p>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Divisions</p>
+                    <h3 id="stat-total-divisions" class="text-2xl font-extrabold text-slate-900 mt-1">--</h3>
+                    <p class="text-[11px] text-sky-600 font-medium mt-1">Across 4 Years</p>
                 </div>
-                <div class="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 text-xs font-extrabold font-mono">
+                <div class="w-10 h-10 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600 text-xs font-extrabold font-mono">
+                    DIV
+                </div>
+            </div>
+
+            <!-- Total Batches -->
+            <div class="shadcn-card p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Class Batches</p>
+                    <h3 id="stat-total-batches" class="text-2xl font-extrabold text-slate-900 mt-1">--</h3>
+                    <p class="text-[11px] text-amber-600 font-medium mt-1">4 batches per class</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 text-xs font-extrabold font-mono">
                     BAT
                 </div>
+            </div>
+        </div>
+
+        <!-- 4-Year Academic Divisions Breakdown -->
+        <div class="space-y-3">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-slate-900 text-sm uppercase tracking-wider">AI & DS Academic Structure (4 Years)</h3>
+            </div>
+            <div id="divisions-summary-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Populated via admin.js -->
             </div>
         </div>
 
@@ -95,21 +121,21 @@
         <div class="shadcn-card overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                 <div>
-                    <h3 class="font-bold text-slate-900 text-base">Academic Batches Overview</h3>
-                    <p class="text-xs text-slate-500">Live data showing mentor allocations & student counts</p>
+                    <h3 class="font-bold text-slate-900 text-base">Mentoring Batches</h3>
+                    <p class="text-xs text-slate-500">Showing mentor allocations & mentee cohort counts</p>
                 </div>
-                <a href="/admin/batches.html" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">View All Batches →</a>
+                <a href="/admin/batches.html" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">Manage Divisions & Batches →</a>
             </div>
 
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
-                            <th class="px-6 py-3">Batch Name</th>
+                            <th class="px-6 py-3">Batch Identifier</th>
                             <th class="px-6 py-3">Department</th>
+                            <th class="px-6 py-3">Academic Year & Class</th>
                             <th class="px-6 py-3">Assigned Mentor</th>
                             <th class="px-6 py-3">Enrolled Mentees</th>
-                            <th class="px-6 py-3">Academic Year</th>
                         </tr>
                     </thead>
                     <tbody id="batches-tbody">
@@ -119,14 +145,91 @@
             </div>
         </div>
 
-    </main>
+    <!-- Modal: Download Official Credentials PDF (Admin Dashboard Exclusive) -->
+    <div id="admin-dashboard-credentials-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-lg">Download Official Credentials PDF</h3>
+                    <p class="text-xs text-slate-500">Department of AI & DS — Sharable login sheets with User ID and Passwords</p>
+                </div>
+                <button onclick="closeAdminDashboardCredentialsModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            </div>
 
-    <footer class="bg-slate-900 border-t border-slate-800 text-slate-400 py-4 text-center text-xs">
-        <p>Mentor-Mentee Management System — Central Admin Console</p>
-    </footer>
+            <!-- Credentials Category Tabs -->
+            <div class="flex p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+                <button type="button" id="tab-cred-student" onclick="setDashboardCredTab('student')" class="w-1/2 py-2 rounded-lg bg-white text-indigo-700 shadow-sm transition">
+                    Student Batches Credentials
+                </button>
+                <button type="button" id="tab-cred-mentor" onclick="setDashboardCredTab('mentor')" class="w-1/2 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition">
+                    Faculty Mentors Directory
+                </button>
+            </div>
 
+            <!-- TAB 1: Student Credentials Filter Form -->
+            <div id="dashboard-cred-student-section" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Select Year / Class:</label>
+                        <select id="dash-cred-year" onchange="onDashboardCredYearChange()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium text-slate-800">
+                            <option value="1">FY (First Year)</option>
+                            <option value="2">SY (Second Year)</option>
+                            <option value="3">TY (Third Year)</option>
+                            <option value="4">BTECH (Final Year)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Select Division:</label>
+                        <select id="dash-cred-div" onchange="onDashboardCredDivChange()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium text-slate-800">
+                            <option value="A">Division A</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Select Batch:</label>
+                    <select id="dash-cred-batch" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-medium text-slate-800">
+                        <option value="ALL">All Batches (Entire Division)</option>
+                    </select>
+                </div>
+
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
+                    <p class="text-slate-600 font-medium">Official Sharable PDFs with Department (AI & DS), Class, Div, and Batch.</p>
+                </div>
+
+                <div class="space-y-2 pt-1">
+                    <button type="button" onclick="triggerDashboardBatchPdf()" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl shadow transition flex items-center justify-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Download Selected Batch PDF</span>
+                    </button>
+
+                    <button type="button" onclick="triggerDashboardAllBatchesPdf()" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow transition flex items-center justify-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+                        <span>Download Separate PDF for Each Batch</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 2: Mentor Credentials Section -->
+            <div id="dashboard-cred-mentor-section" class="hidden space-y-4">
+                <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                    <p class="font-bold text-slate-800">Faculty Mentors Credentials Directory</p>
+                    <p class="text-slate-600">Export the official credentials sheet for all faculty mentors in the Department of Artificial Intelligence & Data Science, including Mentor Codes, Usernames, Passwords, and assigned cohorts.</p>
+                </div>
+                <button type="button" onclick="downloadMentorCredentialsPdf()" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow transition flex items-center justify-center space-x-2">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>Download Faculty Mentors PDF</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- jsPDF & PDF Credentials generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/auth.js"></script>
+    <script src="/assets/js/pdf-credentials.js"></script>
     <script src="/assets/js/admin.js"></script>
 </body>
 </html>

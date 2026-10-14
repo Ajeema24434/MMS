@@ -299,19 +299,54 @@
 
             <!-- ================= VIEW 3: ACADEMIC DETAILS ================= -->
             <div id="view-academic" class="portal-view hidden space-y-6 animate-fade-in">
+                <!-- Semester-Wise Academic Progression Card -->
+                <div class="shadcn-card overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Academic Details & Semester Progression</h2>
+                            <p class="text-xs text-slate-500">Record and track academic performance across current and previous semesters</p>
+                        </div>
+                        <button type="button" onclick="openAcademicModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg shadow transition flex items-center space-x-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span>+ Add / Update Semester Record</span>
+                        </button>
+                    </div>
+
+                    <!-- Semester History Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] font-semibold border-b border-slate-200">
+                                    <th class="px-6 py-3">Semester</th>
+                                    <th class="px-6 py-3">CGPA / SGPA</th>
+                                    <th class="px-6 py-3">Attendance %</th>
+                                    <th class="px-6 py-3">ISE / MSE / ESE</th>
+                                    <th class="px-6 py-3">Backlogs</th>
+                                    <th class="px-6 py-3">Status</th>
+                                    <th class="px-6 py-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="semester-history-tbody">
+                                <tr><td colspan="7" class="px-6 py-6 text-center text-slate-400 text-xs">Loading semester records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Current Semester Subject Breakdown Card -->
                 <div class="shadcn-card overflow-hidden">
                     <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-900">Academic Marks & Attendance Details</h2>
-                            <p class="text-xs text-slate-500">Official semester evaluation records from central exam cell</p>
+                            <h3 class="font-bold text-slate-900 text-base">Current Semester Subject Evaluation</h3>
+                            <p class="text-xs text-slate-500">Subject-level continuous internal evaluation and university exam marks</p>
                         </div>
-                        <span class="px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded font-semibold text-xs">Read-Only Official Records</span>
+                        <span id="current-sem-badge" class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-md font-semibold text-xs">Semester 5</span>
                     </div>
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] font-semibold border-b border-slate-200">
                                     <th class="px-6 py-3">Subject Name</th>
                                     <th class="px-6 py-3">Internal Marks (ISE)</th>
                                     <th class="px-6 py-3">Exam Marks (ESE)</th>
@@ -328,15 +363,15 @@
                     <!-- Summary Stats Footer -->
                     <div class="p-6 bg-slate-50 border-t border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                         <div class="p-3 bg-white rounded-lg border border-slate-200">
-                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Overall Attendance</span>
+                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Latest Attendance</span>
                             <h4 id="acad-overall-attendance" class="text-xl font-extrabold text-blue-700 mt-0.5">82.45%</h4>
                         </div>
                         <div class="p-3 bg-white rounded-lg border border-slate-200">
-                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Subjects Below Required Attendance</span>
+                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Subjects Below Threshold</span>
                             <h4 id="acad-below-attendance" class="text-xl font-extrabold text-emerald-600 mt-0.5">0 Subjects</h4>
                         </div>
                         <div class="p-3 bg-white rounded-lg border border-slate-200">
-                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Academic Performance Summary</span>
+                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Academic Standing</span>
                             <h4 id="acad-overall-performance" class="text-xl font-extrabold text-slate-900 mt-0.5">Good Progress</h4>
                         </div>
                     </div>
@@ -365,7 +400,7 @@
                                     <th class="px-6 py-3">Date</th>
                                     <th class="px-6 py-3">Evidence</th>
                                     <th class="px-6 py-3">Status</th>
-                                    <th class="px-6 py-3">Action</th>
+                                    <th class="px-6 py-3">Mentor Verification Remarks</th>
                                 </tr>
                             </thead>
                             <tbody id="activities-table-tbody">
@@ -609,6 +644,75 @@
         </div>
     </div>
 
+    <!-- MODAL 4: ADD / UPDATE ACADEMIC RECORD MODAL -->
+    <div id="academic-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-lg" id="acad-modal-title">Record Academic Details</h3>
+                    <p class="text-xs text-slate-500">Add or update semester CGPA, attendance, and exam scores</p>
+                </div>
+                <button onclick="closeAcademicModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold leading-none p-1">&times;</button>
+            </div>
+
+            <form id="academic-form" class="space-y-4 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Select Semester *</label>
+                        <select id="acad-modal-sem" required class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                            <option value="1">Semester 1 (FY Sem I)</option>
+                            <option value="2">Semester 2 (FY Sem II)</option>
+                            <option value="3">Semester 3 (SY Sem III)</option>
+                            <option value="4">Semester 4 (SY Sem IV)</option>
+                            <option value="5" selected>Semester 5 (TY Sem V)</option>
+                            <option value="6">Semester 6 (TY Sem VI)</option>
+                            <option value="7">Semester 7 (BTech Sem VII)</option>
+                            <option value="8">Semester 8 (BTech Sem VIII)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">CGPA / SGPA (0.00 – 10.00) *</label>
+                        <input type="number" id="acad-modal-cgpa" step="0.01" min="0" max="10" required placeholder="e.g. 8.45" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono font-medium">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Attendance % (0.0 – 100.0) *</label>
+                        <input type="number" id="acad-modal-attendance" step="0.1" min="0" max="100" required placeholder="e.g. 86.5" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono font-medium">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Subjects Failed / Backlogs</label>
+                        <input type="number" id="acad-modal-failed" min="0" max="10" value="0" placeholder="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono font-medium">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-500 uppercase text-[10px] mb-1.5">Exam Component Scores (Continuous Evaluation)</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <span class="block text-[10px] text-slate-500">ISE (/30)</span>
+                            <input type="number" id="acad-modal-ise" step="0.5" min="0" max="30" placeholder="e.g. 22" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500">MSE (/30)</span>
+                            <input type="number" id="acad-modal-mse" step="0.5" min="0" max="30" placeholder="e.g. 25" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs">
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-500">ESE (/100)</span>
+                            <input type="number" id="acad-modal-ese" step="0.5" min="0" max="100" placeholder="e.g. 68" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 flex space-x-3 border-t border-slate-100">
+                    <button type="button" onclick="closeAcademicModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg hover:bg-slate-200 transition">Cancel</button>
+                    <button type="submit" id="acad-save-btn" class="w-1/2 py-2 bg-blue-600 text-white font-semibold text-xs rounded-lg hover:bg-blue-500 shadow transition">Save Academic Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/auth.js"></script>
     <script src="/assets/js/student.js"></script>
@@ -653,20 +757,35 @@
             }
         });
 
-        // Submit Complaint
-        document.getElementById('complaint-form').addEventListener('submit', async (e) => {
+        // Submit Academic Details (Current or Previous Semester)
+        document.getElementById('academic-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('acad-save-btn');
+            if (btn) btn.disabled = true;
+
             const body = {
-                title: document.getElementById('cmp-title').value.trim(),
-                category: document.getElementById('cmp-category').value,
-                description: document.getElementById('cmp-desc').value.trim()
+                semester: parseInt(document.getElementById('acad-modal-sem').value),
+                cgpa: parseFloat(document.getElementById('acad-modal-cgpa').value),
+                attendance_percentage: parseFloat(document.getElementById('acad-modal-attendance').value),
+                subjects_failed_count: parseInt(document.getElementById('acad-modal-failed').value) || 0,
+                ise_marks: document.getElementById('acad-modal-ise').value ? parseFloat(document.getElementById('acad-modal-ise').value) : 18.0,
+                mse_marks: document.getElementById('acad-modal-mse').value ? parseFloat(document.getElementById('acad-modal-mse').value) : 22.0,
+                ese_marks: document.getElementById('acad-modal-ese').value ? parseFloat(document.getElementById('acad-modal-ese').value) : 55.0
             };
-            const res = await API.post('/student/complaints', body);
-            if (res.success) {
-                closeComplaintModal();
-                loadStudentDashboardData();
-            } else {
-                alert(res.message || 'Error submitting complaint.');
+
+            try {
+                const res = await API.post('/student/academic', body);
+                if (res.success) {
+                    alert(res.message || 'Academic details saved successfully!');
+                    closeAcademicModal();
+                    await loadStudentDashboardData();
+                } else {
+                    alert(res.message || 'Error saving academic record.');
+                }
+            } catch (err) {
+                alert('Server error saving academic details.');
+            } finally {
+                if (btn) btn.disabled = false;
             }
         });
     </script>

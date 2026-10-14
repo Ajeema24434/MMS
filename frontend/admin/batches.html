@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academic Batches — Admin Portal</title>
+    <title>Divisions & Batches — AI & DS Admin Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
@@ -13,14 +13,14 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <span class="font-bold text-base tracking-tight">Mentor-Mentee System</span>
-                <span class="bg-indigo-500/20 text-indigo-300 text-[10px] px-2.5 py-0.5 rounded-full border border-indigo-500/30 font-semibold uppercase">ADMIN</span>
+                <span class="bg-indigo-500/20 text-indigo-300 text-[10px] px-2.5 py-0.5 rounded-full border border-indigo-500/30 font-semibold uppercase">AI & DS ADMIN</span>
             </div>
             
             <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
                 <a href="/admin/dashboard.html" class="text-slate-300 hover:text-white py-5">Dashboard</a>
                 <a href="/admin/mentors.html" class="text-slate-300 hover:text-white py-5">Mentors</a>
                 <a href="/admin/students.html" class="text-slate-300 hover:text-white py-5">Students</a>
-                <a href="/admin/batches.html" class="text-indigo-400 font-semibold border-b-2 border-indigo-500 py-5">Batches</a>
+                <a href="/admin/batches.html" class="text-indigo-400 font-semibold border-b-2 border-indigo-500 py-5">Divisions & Batches</a>
             </nav>
 
             <div class="flex items-center space-x-4">
@@ -33,76 +33,299 @@
 
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900">Academic Batches</h1>
-                <p class="text-xs text-slate-500">Create academic student batches and assign faculty advisors.</p>
-            </div>
-            <button onclick="openModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow transition flex items-center space-x-1">
-                <span>+ Create New Batch</span>
-            </button>
+        <!-- Top Back Navigation Bar -->
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+            <a href="/admin/dashboard.html" 
+               class="inline-flex items-center px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-md border border-slate-200 shadow-sm transition">
+                <span>Back to Dashboard</span>
+            </a>
+            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-[11px] font-bold rounded-lg border border-indigo-100 uppercase tracking-wide">AI & DS Department</span>
         </div>
 
-        <!-- Batches Table Card -->
-        <div class="shadcn-card overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between gap-4">
-                <h3 class="font-bold text-slate-900 text-base">Active Batches</h3>
-                <div class="w-full sm:w-64">
-                    <input type="text" id="batch-search" placeholder="Search batch name, department..." 
-                           class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+        <!-- CLASS & DIVISION FILTER BAR (MANAGE ONE CLASS AT A TIME) -->
+        <div class="shadcn-card p-5 bg-white border border-slate-200 shadow-sm space-y-4">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                <div class="flex items-center space-x-2">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wide">
+                        <svg class="w-3 h-3 mr-1 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                        </svg>
+                        Class Filter
+                    </span>
+                    <h2 class="text-base font-bold text-slate-900">Select Class / Academic Year</h2>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <span id="active-filter-badge" class="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-lg border border-indigo-200 shadow-sm">
+                        Showing: All Classes
+                    </span>
+                    <button type="button" onclick="resetClassFilter()" class="px-2.5 py-1 text-xs text-slate-600 hover:text-slate-900 font-semibold hover:bg-slate-100 rounded-lg border border-slate-200 transition" title="Show all classes and batches">
+                        Reset Filter
+                    </button>
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
-                            <th class="px-6 py-3">Batch Name</th>
-                            <th class="px-6 py-3">Department</th>
-                            <th class="px-6 py-3">Academic Year</th>
-                            <th class="px-6 py-3">Assigned Mentor</th>
-                            <th class="px-6 py-3">Enrolled Mentees</th>
-                        </tr>
-                    </thead>
-                    <tbody id="batches-tbody">
-                        <tr><td colspan="5" class="px-6 py-8 text-center text-slate-400 text-sm">Loading batch directory...</td></tr>
-                    </tbody>
-                </table>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                <!-- Class / Year Tabs -->
+                <div class="md:col-span-8">
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Class / Academic Year</label>
+                    <div class="flex flex-wrap gap-1.5" id="class-filter-pills">
+                        <button type="button" onclick="setClassFilter('ALL')" data-filter="ALL" class="class-pill px-3.5 py-1.5 text-xs font-bold rounded-lg transition bg-indigo-600 text-white shadow-sm">All Classes</button>
+                        <button type="button" onclick="setClassFilter('1')" data-filter="1" class="class-pill px-3.5 py-1.5 text-xs font-semibold rounded-lg transition bg-slate-100 hover:bg-slate-200 text-slate-700">FY (First Year)</button>
+                        <button type="button" onclick="setClassFilter('2')" data-filter="2" class="class-pill px-3.5 py-1.5 text-xs font-semibold rounded-lg transition bg-slate-100 hover:bg-slate-200 text-slate-700">SY (Second Year)</button>
+                        <button type="button" onclick="setClassFilter('3')" data-filter="3" class="class-pill px-3.5 py-1.5 text-xs font-semibold rounded-lg transition bg-slate-100 hover:bg-slate-200 text-slate-700">TY (Third Year)</button>
+                        <button type="button" onclick="setClassFilter('4')" data-filter="4" class="class-pill px-3.5 py-1.5 text-xs font-semibold rounded-lg transition bg-slate-100 hover:bg-slate-200 text-slate-700">BTECH (Final Year)</button>
+                    </div>
+                </div>
+
+                <!-- Division Dropdown Selector -->
+                <div class="md:col-span-4">
+                    <label for="division-filter-select" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Class Division</label>
+                    <select id="division-filter-select" onchange="setDivisionFilter(this.value)" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        <option value="ALL">All Divisions in Class</option>
+                    </select>
+                </div>
             </div>
         </div>
+        
+        <!-- SECTION 1: DIVISIONS MANAGEMENT -->
+        <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center space-x-2">
+                    <h2 class="text-xl font-bold text-slate-900">Class Divisions</h2>
+                    <span id="divisions-count-badge" class="px-2 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded">Divisions</span>
+                </div>
+                <button onclick="openAddDivisionModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow transition flex items-center space-x-1 flex-shrink-0">
+                    <span>+ Add Division Manually</span>
+                </button>
+            </div>
+
+            <!-- Divisions Table Card -->
+            <div class="shadcn-card overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200">
+                    <h3 class="font-bold text-slate-900 text-base">Active AI & DS Divisions</h3>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                <th class="px-6 py-3">Academic Year</th>
+                                <th class="px-6 py-3">Division</th>
+                                <th class="px-6 py-3">Batches Count</th>
+                                <th class="px-6 py-3">Enrolled Students</th>
+                                <th class="px-6 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="divisions-tbody">
+                            <tr><td colspan="5" class="px-6 py-6 text-center text-slate-400 text-sm">Loading divisions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: BATCHES MANAGEMENT -->
+        <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center space-x-2">
+                    <h2 class="text-xl font-bold text-slate-900">Mentoring Batches</h2>
+                    <span id="batches-count-badge" class="px-2 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded">Batches</span>
+                </div>
+                <div class="flex space-x-2 flex-shrink-0">
+                    <button onclick="openCreateBatchModal()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg shadow transition flex items-center space-x-1">
+                        <span>+ Custom Batch</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Batches Table Card -->
+            <div class="shadcn-card overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <h3 class="font-bold text-slate-900 text-base">Batches Directory</h3>
+                    <div class="w-full sm:w-64">
+                        <input type="text" id="batch-search" placeholder="Search batch, division, mentor..." 
+                               class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                <th class="px-6 py-3">Batch Identifier</th>
+                                <th class="px-6 py-3">Department</th>
+                                <th class="px-6 py-3">Year & Division</th>
+                                <th class="px-6 py-3">Assigned Faculty Mentor</th>
+                                <th class="px-6 py-3">Enrolled Mentees</th>
+                                <th class="px-6 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batches-tbody">
+                            <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400 text-sm">Loading batch directory...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </main>
 
-    <!-- Create Batch Modal -->
+    <!-- Add Division Modal -->
+    <div id="division-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-lg">Add Division Manually</h3>
+                <button onclick="closeAddDivisionModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            </div>
+
+            <form id="create-division-form" class="space-y-4" onsubmit="handleCreateDivision(event)">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Department</label>
+                    <input type="text" disabled value="AI & DS (Fixed)" class="w-full px-3 py-2 border border-slate-200 bg-slate-100 text-slate-600 rounded-lg text-sm font-semibold cursor-not-allowed">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Academic Year</label>
+                    <select id="div-year" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="1">FY (First Year)</option>
+                        <option value="2">SY (Second Year)</option>
+                        <option value="3">TY (Third Year)</option>
+                        <option value="4">BTECH (Final Year)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Division Identifier / Name</label>
+                    <input type="text" id="div-name" required placeholder="e.g. C or B or A" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="p-3 bg-indigo-50/70 rounded-xl border border-indigo-100 flex items-start space-x-2">
+                    <input type="checkbox" id="div-auto-batches" checked class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
+                    <label for="div-auto-batches" class="text-xs text-indigo-900 font-medium">
+                        Automatically create 4 class batches (B1, B2, B3, B4) for this division.
+                    </label>
+                </div>
+
+                <div class="pt-2 flex space-x-2">
+                    <button type="button" onclick="closeAddDivisionModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200 transition">← Back / Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-500 transition">Save Division</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Custom Batch Modal -->
     <div id="batch-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="font-bold text-slate-900 text-lg">Create Academic Batch</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+                <h3 class="font-bold text-slate-900 text-lg">Create Custom Batch</h3>
+                <button onclick="closeCreateBatchModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
             </div>
 
             <form id="create-batch-form" class="space-y-3">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Batch Name</label>
-                    <input type="text" id="b-name" required placeholder="e.g. CSE-2024-C" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Batch Identifier</label>
+                    <input type="text" id="b-name" required placeholder="e.g. FY-AIDS-A-B5" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Year</label>
+                        <select id="b-year" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="1">FY (First Year)</option>
+                            <option value="2">SY (Second Year)</option>
+                            <option value="3">TY (Third Year)</option>
+                            <option value="4">BTECH (Final Year)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Division</label>
+                        <input type="text" id="b-div" placeholder="A" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Department</label>
-                    <input type="text" id="b-dept" required placeholder="Computer Engineering" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Academic Year</label>
-                    <input type="text" id="b-year" required placeholder="2024-2025" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Assign Mentor</label>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Assign Mentor (Optional)</label>
                     <select id="modal-batch-mentor" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="">Assign Mentor (Optional)</option>
                     </select>
                 </div>
 
                 <div class="pt-2 flex space-x-2">
-                    <button type="button" onclick="closeModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200">Cancel</button>
-                    <button type="submit" class="w-1/2 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-500">Save Batch</button>
+                    <button type="button" onclick="closeCreateBatchModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200 transition">← Back / Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-500 transition">Save Batch</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Assign Mentor Modal -->
+    <div id="assign-mentor-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-lg">Assign Faculty Mentor</h3>
+                <button onclick="closeAssignMentorModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            </div>
+
+            <form id="assign-mentor-form" class="space-y-4" onsubmit="handleAssignMentor(event)">
+                <input type="hidden" id="assign-b-id">
+                <div class="p-3 bg-indigo-50/60 rounded-xl border border-indigo-100 text-xs text-indigo-900">
+                    <span class="font-semibold">Batch:</span> <span id="assign-b-name" class="font-bold font-mono">--</span>
+                    <span class="ml-2 font-semibold text-indigo-700">(AI & DS)</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Select Mentor</label>
+                    <select id="assign-b-mentor" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">-- No Mentor (Unassign) --</option>
+                    </select>
+                </div>
+
+                <div class="pt-2 flex space-x-2">
+                    <button type="button" onclick="closeAssignMentorModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200 transition">← Back / Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-500 transition">Save Assignment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Batch Modal -->
+    <div id="edit-batch-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-lg">Edit Batch Details</h3>
+                <button onclick="closeEditBatchModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            </div>
+
+            <form id="edit-batch-form" class="space-y-3" onsubmit="handleUpdateBatch(event)">
+                <input type="hidden" id="edit-b-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Batch Identifier</label>
+                    <input type="text" id="edit-b-name" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Year</label>
+                        <select id="edit-b-year" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="1">FY (First Year)</option>
+                            <option value="2">SY (Second Year)</option>
+                            <option value="3">TY (Third Year)</option>
+                            <option value="4">BTECH (Final Year)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Division</label>
+                        <input type="text" id="edit-b-div" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Assigned Mentor</label>
+                    <select id="edit-b-mentor" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">-- No Mentor (Unassign) --</option>
+                    </select>
+                </div>
+
+                <div class="pt-2 flex space-x-2">
+                    <button type="button" onclick="closeEditBatchModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200 transition">← Back / Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-500 transition">Update Batch</button>
                 </div>
             </form>
         </div>
@@ -112,23 +335,43 @@
     <script src="/assets/js/auth.js"></script>
     <script src="/assets/js/admin.js"></script>
     <script>
-        function openModal() { document.getElementById('batch-modal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('batch-modal').classList.add('hidden'); }
+        function openCreateBatchModal() { 
+            if (typeof activeClassFilter !== 'undefined' && activeClassFilter !== 'ALL') {
+                const yrSel = document.getElementById('b-year');
+                if (yrSel) yrSel.value = activeClassFilter;
+            }
+            if (typeof activeDivisionFilter !== 'undefined' && activeDivisionFilter !== 'ALL') {
+                const divInp = document.getElementById('b-div');
+                if (divInp) divInp.value = activeDivisionFilter;
+            }
+            const createSelect = document.getElementById('modal-batch-mentor');
+            if (createSelect && typeof buildMentorSelectOptions === 'function' && typeof allMentors !== 'undefined') {
+                createSelect.innerHTML = buildMentorSelectOptions(allMentors, 'Assign Mentor (Optional)');
+                createSelect.value = '';
+            }
+            document.getElementById('batch-modal').classList.remove('hidden'); 
+        }
+        function closeCreateBatchModal() { document.getElementById('batch-modal').classList.add('hidden'); }
 
         document.getElementById('create-batch-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const body = {
                 name: document.getElementById('b-name').value.trim(),
-                department: document.getElementById('b-dept').value.trim(),
-                academic_year: document.getElementById('b-year').value.trim(),
+                year: parseInt(document.getElementById('b-year').value),
+                division: document.getElementById('b-div').value.trim().toUpperCase() || null,
+                academic_year: '2024-2025',
                 mentor_id: document.getElementById('modal-batch-mentor').value || null
             };
             const res = await API.post('/admin/batches', body);
             if (res.success) {
-                closeModal();
-                loadAdminBatches();
+                showToast('Batch created successfully');
+                closeCreateBatchModal();
+                document.getElementById('create-batch-form').reset();
+                await loadAdminBatches();
+                if (typeof updateDivisionFilterOptions === 'function') updateDivisionFilterOptions();
+                if (typeof applyBatchesAndDivisionsFilter === 'function') applyBatchesAndDivisionsFilter();
             } else {
-                alert(res.message || 'Error creating batch');
+                showToast(res.message || 'Error creating batch', 'error');
             }
         });
     </script>

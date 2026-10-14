@@ -44,6 +44,15 @@ const API = {
         return { success: false, message: 'Session expired. Please log in again.' };
       }
 
+      if (response.status === 403) {
+        const data = await response.json().catch(() => ({}));
+        return {
+          success: false,
+          status: 403,
+          message: data.message || 'Access forbidden: Insufficient role permissions.'
+        };
+      }
+
       const data = await response.json();
       return data;
     } catch (err) {
@@ -75,5 +84,12 @@ const API = {
       method: 'PATCH',
       body: JSON.stringify(body)
     });
+  },
+
+  delete(endpoint) {
+    return this.request(endpoint, {
+      method: 'DELETE'
+    });
   }
 };
+

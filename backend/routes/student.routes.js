@@ -13,6 +13,7 @@ router.get('/profile', studentController.getStudentProfile);
 router.put('/profile', studentController.updateStudentProfile);
 
 router.get('/academic', studentController.getStudentAcademic);
+router.post('/academic', studentController.addOrUpdateStudentAcademic);
 
 router.get('/activities', studentController.getStudentActivities);
 router.post('/activities', studentController.addStudentActivity);
@@ -24,5 +25,6 @@ router.post('/complaints', studentController.submitComplaint);
 
 router.get('/notifications', studentController.getStudentNotifications);
 router.get('/report', studentController.getStudentCompleteReport);
+router.get('/credentials', studentController.getClassCredentials);
 
 module.exports = router;

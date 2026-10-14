@@ -39,9 +39,9 @@ async function runTests() {
   console.log("  RUNNING ALL 3 PROFILES AUTHENTICATION & PORTAL TESTS");
   console.log("============================================================");
 
-  // 1. Student Login via Roll Number (CSE-01)
-  console.log("\n[TEST 1] Student Login (Roll: CSE-01)...");
-  const studentLogin = await makeRequest('/api/auth/login', 'POST', { identifier: 'CSE-01', password: 'password123' });
+  // 1. Student Login via URN User ID (1026091001)
+  console.log("\n[TEST 1] Student Login (URN: 1026091001)...");
+  const studentLogin = await makeRequest('/api/auth/login', 'POST', { identifier: '1026091001', password: 'Pass@1026091001' });
   console.log(`Status: ${studentLogin.status}`, studentLogin.data.success ? `✓ STUDENT SUCCESS (${studentLogin.data.user.name})` : '✕ FAILED');
 
   // 2. Mentor Login via Mentor Code (MNT101)

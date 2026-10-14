@@ -10,6 +10,7 @@ const getStudentByUserId = async (userId) => {
       s.urn,
       s.roll_no,
       s.department,
+      s.year,
       s.division,
       s.semester,
       s.phone,
@@ -20,6 +21,7 @@ const getStudentByUserId = async (userId) => {
       b.name as batch_name,
       b.academic_year,
       m.id as mentor_id,
+      mu.id as mentor_user_id,
       mu.name as mentor_name,
       m.department as mentor_department,
       m.phone as mentor_phone,
@@ -34,6 +36,46 @@ const getStudentByUserId = async (userId) => {
   `, [userId]);
 
   return students.length > 0 ? students[0] : null;
+};
+
+// Dynamic Subject Mark Generator based on Student Year and actual Academic Records
+const getStudentSubjectMarks = (student, latestAcademic) => {
+  const year = student.year || 1;
+  const subjectsByYear = {
+    1: ['Applied Mathematics-I', 'Engineering Physics', 'Basic Electrical & Electronics', 'Programming & Problem Solving', 'Engineering Graphics'],
+    2: ['Discrete Mathematics', 'Data Structures & Algorithms', 'Database Management Systems', 'Digital Logic Design', 'Object Oriented Programming'],
+    3: ['Machine Learning', 'Operating Systems', 'Computer Networks', 'Design & Analysis of Algorithms', 'Artificial Intelligence'],
+    4: ['Deep Learning', 'Cloud Computing', 'Big Data Analytics', 'Natural Language Processing', 'Information & Cyber Security']
+  };
+
+  const subjects = subjectsByYear[year] || subjectsByYear[1];
+  const ise = latestAcademic?.ise_marks || 18.0;
+  const mse = latestAcademic?.mse_marks || 24.0;
+  const ese = latestAcademic?.ese_marks || 58.0;
+
+  return subjects.map((subj, idx) => {
+    // slight deterministic variation per subject based on student id and subject index
+    const delta = (((student.id * 7 + idx * 11) % 9) - 4);
+    const internal = Math.min(30, Math.max(10, Math.round((ise / 20 * 15 + mse / 30 * 15) + delta * 0.4)));
+    const exam = Math.min(70, Math.max(25, Math.round(ese + delta * 0.8)));
+    const total = internal + exam;
+    let grade = 'P';
+    if (total >= 85) grade = 'O';
+    else if (total >= 75) grade = 'A+';
+    else if (total >= 65) grade = 'A';
+    else if (total >= 55) grade = 'B+';
+    else if (total >= 45) grade = 'B';
+    else if (total >= 40) grade = 'C';
+    else grade = 'F';
+
+    return {
+      subject: subj,
+      internal,
+      exam,
+      total,
+      grade
+    };
+  });
 };
 
 // GET /api/student/dashboard
@@ -58,14 +100,8 @@ const getStudentDashboard = async (req, res) => {
       ese_marks: 62.0
     };
 
-    // Subject breakdown
-    const subjectMarks = [
-      { subject: 'Maths', internal: 18, exam: 58, total: 76, grade: 'A' },
-      { subject: 'DSA', internal: 19, exam: 62, total: 81, grade: 'A+' },
-      { subject: 'DBMS', internal: 16, exam: 52, total: 68, grade: 'B+' },
-      { subject: 'OS', internal: 17, exam: 55, total: 72, grade: 'A' },
-      { subject: 'Computer Networks', internal: 15, exam: 48, total: 63, grade: 'B' }
-    ];
+    // Dynamic Subject breakdown based on academic records
+    const subjectMarks = getStudentSubjectMarks(student, latestAcademic);
 
     // Meetings
     const meetings = student.batch_id ? await db.query(
@@ -80,7 +116,11 @@ const getStudentDashboard = async (req, res) => {
       agenda: 'Mid-Term Academic Review & Guidance'
     };
 
-    const meetingsAttendedCount = meetings.filter(m => m.status === 'Completed').length;
+    const attendedRes = await db.query(
+      "SELECT COUNT(*) as count FROM meeting_attendees WHERE student_id = ? AND status = 'Present'",
+      [student.id]
+    );
+    const meetingsAttendedCount = attendedRes[0]?.count || 0;
 
     // Activities
     const activities = await db.query(
@@ -155,6 +195,14 @@ const updateStudentProfile = async (req, res) => {
       await db.query('UPDATE users SET email = ? WHERE id = ?', [email.trim(), student.user_id]);
     }
 
+    // Simultaneously notify assigned mentor
+    if (student.mentor_user_id) {
+      await db.query(
+        'INSERT INTO notifications (user_id, message) VALUES (?, ?)',
+        [student.mentor_user_id, `Mentee ${student.name} (${student.urn}) updated contact information (Phone: ${phone ? phone.trim() : student.phone}, Email: ${email ? email.trim() : student.email}).`]
+      );
+    }
+
     logger.info(`Student profile updated for URN ${student.urn}`);
     return res.status(200).json({ success: true, message: 'Personal profile details updated successfully.' });
   } catch (err) {
@@ -171,13 +219,7 @@ const getStudentAcademic = async (req, res) => {
 
     const records = await db.query('SELECT * FROM academic_records WHERE student_id = ? ORDER BY semester DESC', [student.id]);
 
-    const subjectMarks = [
-      { subject: 'Maths', internal: 18, exam: 58, total: 76, grade: 'A' },
-      { subject: 'DSA', internal: 19, exam: 62, total: 81, grade: 'A+' },
-      { subject: 'DBMS', internal: 16, exam: 52, total: 68, grade: 'B+' },
-      { subject: 'OS', internal: 17, exam: 55, total: 72, grade: 'A' },
-      { subject: 'Computer Networks', internal: 15, exam: 48, total: 63, grade: 'B' }
-    ];
+    const subjectMarks = getStudentSubjectMarks(student, records[0]);
 
     return res.status(200).json({
       success: true,
@@ -189,6 +231,89 @@ const getStudentAcademic = async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Server error fetching academic records' });
+  }
+};
+
+// POST /api/student/academic (Add or update semester academic details)
+const addOrUpdateStudentAcademic = async (req, res) => {
+  try {
+    const student = await getStudentByUserId(req.user.id);
+    if (!student) return res.status(404).json({ success: false, message: 'Student record not found.' });
+
+    let { semester, cgpa, attendance_percentage, ise_marks, mse_marks, ese_marks, subjects_failed_count } = req.body;
+
+    const parsedSemester = parseInt(semester);
+    if (isNaN(parsedSemester) || parsedSemester < 1 || parsedSemester > 8) {
+      return res.status(400).json({ success: false, message: 'Semester must be between 1 and 8.' });
+    }
+
+    const parsedCgpa = parseFloat(cgpa);
+    if (isNaN(parsedCgpa) || parsedCgpa < 0 || parsedCgpa > 10) {
+      return res.status(400).json({ success: false, message: 'CGPA must be a valid number between 0.00 and 10.00.' });
+    }
+
+    const parsedAttendance = parseFloat(attendance_percentage);
+    if (isNaN(parsedAttendance) || parsedAttendance < 0 || parsedAttendance > 100) {
+      return res.status(400).json({ success: false, message: 'Attendance percentage must be between 0 and 100.' });
+    }
+
+    const parsedIse = ise_marks !== undefined && ise_marks !== '' ? parseFloat(ise_marks) : 18.0;
+    const parsedMse = mse_marks !== undefined && mse_marks !== '' ? parseFloat(mse_marks) : 22.0;
+    const parsedEse = ese_marks !== undefined && ese_marks !== '' ? parseFloat(ese_marks) : 55.0;
+    const parsedFailed = subjects_failed_count !== undefined && subjects_failed_count !== '' ? parseInt(subjects_failed_count) : 0;
+    const defaulter_flag = (parsedAttendance < 75 || parsedFailed > 0) ? 1 : 0;
+
+    // Check if record for this student and semester already exists
+    const existing = await db.query(
+      'SELECT id FROM academic_records WHERE student_id = ? AND semester = ? LIMIT 1',
+      [student.id, parsedSemester]
+    );
+
+    let recordId;
+    if (existing.length > 0) {
+      recordId = existing[0].id;
+      await db.query(`
+        UPDATE academic_records
+        SET cgpa = ?, attendance_percentage = ?, ise_marks = ?, mse_marks = ?, ese_marks = ?, subjects_failed_count = ?, defaulter_flag = ?
+        WHERE id = ?
+      `, [parsedCgpa, parsedAttendance, parsedIse, parsedMse, parsedEse, parsedFailed, defaulter_flag, recordId]);
+      logger.info(`Updated academic record #${recordId} for Student URN ${student.urn} (Semester ${parsedSemester})`);
+    } else {
+      const insRes = await db.query(`
+        INSERT INTO academic_records (student_id, semester, cgpa, attendance_percentage, ise_marks, mse_marks, ese_marks, subjects_failed_count, defaulter_flag)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [student.id, parsedSemester, parsedCgpa, parsedAttendance, parsedIse, parsedMse, parsedEse, parsedFailed, defaulter_flag]);
+      recordId = insRes.insertId;
+      logger.info(`Created new academic record #${recordId} for Student URN ${student.urn} (Semester ${parsedSemester})`);
+    }
+
+    // Update current student semester if this semester is greater
+    if (parsedSemester > (student.semester || 1)) {
+      await db.query('UPDATE students SET semester = ? WHERE id = ?', [parsedSemester, student.id]);
+    }
+
+    // Simultaneously notify assigned mentor
+    if (student.mentor_user_id) {
+      await db.query(
+        'INSERT INTO notifications (user_id, message) VALUES (?, ?)',
+        [student.mentor_user_id, `Mentee ${student.name} (${student.urn}) updated academic details for Semester ${parsedSemester} (Attendance: ${parsedAttendance}%, CGPA: ${parsedCgpa}).`]
+      );
+    }
+
+    const updatedRecords = await db.query(
+      'SELECT * FROM academic_records WHERE student_id = ? ORDER BY semester DESC',
+      [student.id]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Academic details for Semester ${parsedSemester} successfully saved.`,
+      recordId,
+      records: updatedRecords
+    });
+  } catch (err) {
+    logger.error('Error saving student academic record:', err);
+    return res.status(500).json({ success: false, message: 'Server error saving academic details.' });
   }
 };
 
@@ -221,6 +346,14 @@ const addStudentActivity = async (req, res) => {
       [student.id, title, category, description || '', date_achieved, evidence_url || 'certificate.pdf']
     );
 
+    // Simultaneously notify assigned mentor
+    if (student.mentor_user_id) {
+      await db.query(
+        'INSERT INTO notifications (user_id, message) VALUES (?, ?)',
+        [student.mentor_user_id, `Mentee ${student.name} (${student.urn}) submitted a new certificate for verification: "${title}" (${category}).`]
+      );
+    }
+
     return res.status(201).json({
       success: true,
       message: 'Activity submitted successfully for mentor verification.',
@@ -238,7 +371,15 @@ const getStudentMeetings = async (req, res) => {
     const student = await getStudentByUserId(req.user.id);
     if (!student || !student.batch_id) return res.status(200).json({ success: true, upcoming: [], past: [] });
 
-    const meetings = await db.query('SELECT * FROM meetings WHERE batch_id = ? ORDER BY meeting_date DESC', [student.batch_id]);
+    const meetings = await db.query(`
+      SELECT m.*, 
+             COALESCE(ma.status, 'Pending') as attendance_status,
+             ma.remarks as attendance_remarks
+      FROM meetings m
+      LEFT JOIN meeting_attendees ma ON ma.meeting_id = m.id AND ma.student_id = ?
+      WHERE m.batch_id = ?
+      ORDER BY m.meeting_date DESC
+    `, [student.id, student.batch_id]);
 
     const upcoming = meetings.filter(m => m.status === 'Scheduled');
     const past = meetings.filter(m => m.status !== 'Scheduled');
@@ -277,6 +418,14 @@ const submitComplaint = async (req, res) => {
       `INSERT INTO complaints (student_id, title, description, category, status) VALUES (?, ?, ?, ?, 'Pending')`,
       [student.id, title, description, category || 'Academic']
     );
+
+    // Simultaneously notify assigned mentor
+    if (student.mentor_user_id) {
+      await db.query(
+        'INSERT INTO notifications (user_id, message) VALUES (?, ?)',
+        [student.mentor_user_id, `Mentee ${student.name} (${student.urn}) filed a new complaint: "${title}" (${category || 'Academic'}).`]
+      );
+    }
 
     return res.status(201).json({
       success: true,
@@ -334,13 +483,7 @@ const getStudentCompleteReport = async (req, res) => {
         records: academicRecords,
         overallAttendance: academicRecords[0]?.attendance_percentage || 82.45,
         overallCgpa: academicRecords[0]?.cgpa || 7.50,
-        subjectMarks: [
-          { subject: 'Maths', internal: 18, exam: 58, total: 76, grade: 'A' },
-          { subject: 'DSA', internal: 19, exam: 62, total: 81, grade: 'A+' },
-          { subject: 'DBMS', internal: 16, exam: 52, total: 68, grade: 'B+' },
-          { subject: 'OS', internal: 17, exam: 55, total: 72, grade: 'A' },
-          { subject: 'Computer Networks', internal: 15, exam: 48, total: 63, grade: 'B' }
-        ]
+        subjectMarks: getStudentSubjectMarks(student, academicRecords[0])
       },
       meetings,
       activities,
@@ -359,16 +502,119 @@ const getStudentCompleteReport = async (req, res) => {
   }
 };
 
+// GET /api/student/credentials
+// Returns student credentials for their class, division, and batches
+const getClassCredentials = async (req, res) => {
+  try {
+    const currentStudent = await getStudentByUserId(req.user.id);
+    if (!currentStudent) {
+      return res.status(404).json({ success: false, message: 'Student profile not found.' });
+    }
+
+    const { scope = 'all', batch_id } = req.query; // 'all' (all batches in class/div) or 'batch' (only student's batch)
+
+    let sql = `
+      SELECT 
+        s.id,
+        s.roll_no,
+        s.urn,
+        s.department,
+        s.year,
+        s.division,
+        s.batch_id,
+        u.name,
+        u.email,
+        u.initial_password,
+        b.name as batch_name,
+        b.year as batch_year,
+        m.id as mentor_id,
+        mu.name as mentor_name
+      FROM students s
+      JOIN users u ON s.user_id = u.id
+      LEFT JOIN batches b ON s.batch_id = b.id
+      LEFT JOIN mentors m ON b.mentor_id = m.id
+      LEFT JOIN users mu ON m.user_id = mu.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    // Filter by student's year if present
+    if (currentStudent.year) {
+      sql += ' AND s.year = ?';
+      params.push(currentStudent.year);
+    }
+
+    // Filter by student's division if present
+    if (currentStudent.division) {
+      sql += ' AND s.division = ?';
+      params.push(currentStudent.division);
+    }
+
+    // If batch_id explicitly specified or scope === 'batch'
+    if (batch_id && batch_id !== 'ALL') {
+      sql += ' AND s.batch_id = ?';
+      params.push(parseInt(batch_id));
+    } else if (scope === 'batch' && currentStudent.batch_id) {
+      sql += ' AND s.batch_id = ?';
+      params.push(currentStudent.batch_id);
+    }
+
+    sql += ' ORDER BY b.name ASC, s.roll_no ASC';
+
+    const rows = await db.query(sql, params);
+    const yearPrefixMap = { 1: 'FY', 2: 'SY', 3: 'TY', 4: 'BTECH' };
+
+    const students = rows.map((r, index) => ({
+      sr_no: index + 1,
+      id: r.id,
+      roll_no: r.roll_no,
+      name: r.name,
+      urn: r.urn,
+      username: r.urn,
+      password: r.initial_password || `Pass@${r.urn}`,
+      email: r.email,
+      department: r.department || 'AI & DS',
+      year: r.year,
+      year_name: yearPrefixMap[r.year] || 'FY',
+      division: r.division,
+      batch_id: r.batch_id,
+      batch_name: r.batch_name || 'Unassigned',
+      mentor_name: r.mentor_name || 'Faculty Mentor'
+    }));
+
+    return res.status(200).json({
+      success: true,
+      department: 'AI & DS',
+      current_student: {
+        id: currentStudent.id,
+        urn: currentStudent.urn,
+        year: currentStudent.year,
+        year_name: yearPrefixMap[currentStudent.year] || 'FY',
+        division: currentStudent.division,
+        batch_id: currentStudent.batch_id,
+        batch_name: currentStudent.batch_name
+      },
+      count: students.length,
+      students
+    });
+  } catch (err) {
+    logger.error('Error fetching student class credentials:', err);
+    return res.status(500).json({ success: false, message: 'Server error fetching class credentials' });
+  }
+};
+
 module.exports = {
   getStudentDashboard,
   getStudentProfile,
   updateStudentProfile,
   getStudentAcademic,
+  addOrUpdateStudentAcademic,
   getStudentActivities,
   addStudentActivity,
   getStudentMeetings,
   getStudentComplaints,
   submitComplaint,
   getStudentNotifications,
-  getStudentCompleteReport
+  getStudentCompleteReport,
+  getClassCredentials
 };

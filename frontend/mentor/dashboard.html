@@ -65,6 +65,7 @@
             <button class="tab-btn active" data-tab="roster">Mentees Roster</button>
             <button class="tab-btn" data-tab="reports">Excel Report Generation</button>
             <button class="tab-btn" data-tab="meetings">Common Meeting Agenda</button>
+            <button class="tab-btn" data-tab="activities">Certificate Verification</button>
             <button class="tab-btn" data-tab="complaints">Mentee Complaints</button>
             <button class="tab-btn" data-tab="ml-summary">Performance Risk Insights</button>
         </div>
@@ -77,9 +78,11 @@
                         <h3 class="font-bold text-slate-900 text-base">Assigned Mentees Roster</h3>
                         <p class="text-xs text-slate-500">Only mentees in your assigned batch are visible</p>
                     </div>
-                    <div class="w-full sm:w-64">
-                        <input type="text" id="mentor-student-search" placeholder="Search mentee name, URN, roll..." 
-                               class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div class="flex items-center">
+                        <div class="w-full sm:w-64">
+                            <input type="text" id="mentor-student-search" placeholder="Search mentee name, URN, roll..." 
+                                   class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
                     </div>
                 </div>
 
@@ -185,6 +188,41 @@
 
                 <div id="meetings-list" class="space-y-3">
                     <p class="text-xs text-slate-400">Loading meeting history...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: MENTEE CERTIFICATES & ACTIVITY VERIFICATION -->
+        <div id="tab-activities" class="tab-content hidden space-y-6 animate-fade-in">
+            <div class="shadcn-card p-6 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">Mentee Certificate & Activity Verification</h3>
+                        <p class="text-xs text-slate-500">Review certificates submitted by students in your batch and update verification status</p>
+                    </div>
+                    <span id="pending-activities-badge" class="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-full border border-amber-200">
+                        0 Pending
+                    </span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                <th class="px-6 py-3">Mentee (Roll No)</th>
+                                <th class="px-6 py-3">Activity Title</th>
+                                <th class="px-6 py-3">Category</th>
+                                <th class="px-6 py-3">Date</th>
+                                <th class="px-6 py-3">Certificate / Evidence</th>
+                                <th class="px-6 py-3">Status</th>
+                                <th class="px-6 py-3">Mentor Remarks</th>
+                                <th class="px-6 py-3">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mentor-activities-tbody">
+                            <tr><td colspan="8" class="px-6 py-8 text-center text-slate-400 text-sm">Loading activities...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -328,10 +366,94 @@
         </div>
     </div>
 
+    <!-- Modal 3: Mark Meeting Attendance -->
+    <div id="meeting-attendance-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 flex-shrink-0">
+                <div>
+                    <h3 id="att-modal-title" class="font-bold text-slate-900 text-lg">Mark Meeting Attendance</h3>
+                    <p id="att-modal-subtitle" class="text-xs text-slate-500">Meeting #1 — Agenda</p>
+                </div>
+                <button onclick="closeMeetingAttendanceModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            </div>
+
+            <div class="flex items-center justify-between text-xs py-1 flex-shrink-0">
+                <span class="text-slate-600 font-medium">Toggle attendance status for each mentee:</span>
+                <div class="flex space-x-2">
+                    <button type="button" onclick="markAllAttendance('Present')" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold rounded border border-emerald-200 transition">Mark All Present</button>
+                    <button type="button" onclick="markAllAttendance('Absent')" class="px-2.5 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-semibold rounded border border-rose-200 transition">Mark All Absent</button>
+                </div>
+            </div>
+
+            <div class="overflow-y-auto flex-1 border border-slate-200 rounded-xl">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead class="sticky top-0 bg-slate-50 text-slate-500 uppercase text-[10px] font-semibold border-b border-slate-200">
+                        <tr>
+                            <th class="px-4 py-2.5">Roll No</th>
+                            <th class="px-4 py-2.5">Mentee Name</th>
+                            <th class="px-4 py-2.5">URN</th>
+                            <th class="px-4 py-2.5">Status</th>
+                            <th class="px-4 py-2.5">Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="meeting-attendance-tbody">
+                        <tr><td colspan="5" class="px-4 py-6 text-center text-slate-400">Loading mentees...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pt-2 flex justify-end space-x-2 flex-shrink-0">
+                <button type="button" onclick="closeMeetingAttendanceModal()" class="px-4 py-2 bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg hover:bg-slate-200">Cancel</button>
+                <button type="button" onclick="saveMeetingAttendanceSubmit()" class="px-5 py-2 bg-indigo-600 text-white font-semibold text-xs rounded-lg hover:bg-indigo-500 shadow">Save Attendance & Notify Mentees</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Verify Certificate / Activity -->
+    <div id="verify-activity-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-lg">Verify Mentee Certificate</h3>
+                <button onclick="closeVerifyActivityModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            </div>
+
+            <form id="verify-activity-form" class="space-y-3">
+                <input type="hidden" id="va-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Student & Activity</label>
+                    <p id="va-title" class="p-2.5 bg-slate-50 border border-slate-200 rounded text-xs font-semibold text-slate-800">Title</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Certificate Evidence</label>
+                    <p id="va-evidence" class="p-2.5 bg-slate-50 border border-slate-200 rounded text-xs text-indigo-600 font-mono">certificate.pdf</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Verification Status</label>
+                    <select id="va-status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="Approved">Approved (Verified)</option>
+                        <option value="Rejected">Rejected (Invalid / Incomplete)</option>
+                        <option value="Pending">Pending (Under Review)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Mentor Remarks / Feedback</label>
+                    <textarea id="va-remarks" rows="3" placeholder="Add verification remarks for the mentee..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+
+                <div class="pt-2 flex space-x-2">
+                    <button type="button" onclick="closeVerifyActivityModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200">Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-500">Save Status & Notify</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <footer class="bg-slate-900 border-t border-slate-800 text-slate-400 py-4 text-center text-xs">
         <p>Mentor–Mentee Management System — Faculty Portal</p>
     </footer>
 
+    <script src="/assets/js/vendor/jspdf.umd.min.js"></script>
+    <script src="/assets/js/vendor/jspdf.plugin.autotable.min.js"></script>
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/auth.js"></script>
     <script src="/assets/js/mentor.js"></script>
@@ -383,6 +505,23 @@
                 loadMentorDashboard();
             } else {
                 alert(res.message || 'Error updating complaint');
+            }
+        });
+
+        // Submit Certificate Verification Form
+        document.getElementById('verify-activity-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('va-id').value;
+            const body = {
+                status: document.getElementById('va-status').value,
+                mentor_remarks: document.getElementById('va-remarks').value.trim()
+            };
+            const res = await API.put(`/mentor/activities/${id}/status`, body);
+            if (res.success) {
+                closeVerifyActivityModal();
+                loadMentorDashboard();
+            } else {
+                alert(res.message || 'Error updating certificate status');
             }
         });
     </script>

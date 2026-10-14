@@ -48,7 +48,13 @@ async function initDB() {
     const isNewDb = !fs.existsSync(dbFilePath);
     sqliteDb = new Database(dbFilePath);
 
-    if (isNewDb || true) {
+    let tableExists = false;
+    try {
+      const check = sqliteDb.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='users'").get();
+      tableExists = !!check;
+    } catch (_) {}
+
+    if (isNewDb || !tableExists) {
       logger.info('Initializing SQLite schema and seed data...');
       try {
         const schemaPath = path.join(__dirname, '../../database/schema.sql');
@@ -79,10 +85,16 @@ async function initDB() {
   }
 }
 
-async function query(sql, params = []) {
-  if (!dbType) {
-    await initDB();
+let initPromise = null;
+function ensureDB() {
+  if (!initPromise) {
+    initPromise = initDB();
   }
+  return initPromise;
+}
+
+async function query(sql, params = []) {
+  await ensureDB();
 
   if (dbType === 'MYSQL') {
     try {
@@ -95,7 +107,7 @@ async function query(sql, params = []) {
   } else {
     try {
       const trimmedSql = sql.trim();
-      const isSelect = trimmedSql.toUpperCase().startsWith('SELECT');
+      const isSelect = trimmedSql.toUpperCase().startsWith('SELECT') || trimmedSql.toUpperCase().startsWith('PRAGMA');
       
       if (isSelect) {
         const stmt = sqliteDb.prepare(sql);
@@ -116,9 +128,10 @@ async function query(sql, params = []) {
 }
 
 // Immediately initialize DB on module require
-initDB();
+ensureDB();
 
 module.exports = {
   query,
-  getDbType: () => dbType
+  getDbType: () => dbType,
+  ensureDB
 };

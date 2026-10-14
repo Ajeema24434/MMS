@@ -45,12 +45,22 @@ async function loadStudentDashboardData() {
   const stNameElements = document.querySelectorAll('.st-val-name');
   stNameElements.forEach(el => el.textContent = student.name);
 
-  document.getElementById('st-val-roll').textContent = student.roll_no;
-  document.getElementById('st-val-urn').textContent = student.urn;
-  document.getElementById('st-val-div').textContent = student.division;
-  document.getElementById('st-val-sem').textContent = student.semester || 5;
-  document.getElementById('st-val-batch').textContent = student.batch_name || 'Unassigned';
-  document.getElementById('st-val-mentor').textContent = student.mentor_name || 'Unassigned';
+  const setElemText = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val ?? '';
+  };
+
+  setElemText('st-val-roll', student.roll_no);
+  setElemText('st-val-roll-bar', student.roll_no);
+  setElemText('st-val-urn', student.urn);
+  setElemText('st-val-urn-bar', student.urn);
+  setElemText('st-val-div', student.division);
+  setElemText('st-val-div-bar', student.division);
+  setElemText('st-val-sem', student.semester || 5);
+  setElemText('st-val-sem-bar', student.semester || 5);
+  setElemText('st-val-batch', student.batch_name || 'Unassigned');
+  setElemText('st-val-batch-bar', student.batch_name || 'Unassigned');
+  setElemText('st-val-mentor', student.mentor_name || 'Unassigned');
 
   // Summary Cards
   document.getElementById('card-attendance').textContent = `${summary.attendance}%`;
@@ -132,25 +142,121 @@ function populateProfileView(student) {
   document.getElementById('prof-m-code').textContent = student.mentor_college_id || 'MNT101';
 }
 
+let currentAcademicRecords = [];
+
 // Academic Details View
 function populateAcademicView(records, subjectMarks) {
+  currentAcademicRecords = records || [];
+
+  // 1. Populate Semester History Table (Previous & Current Semesters)
+  const semHistoryTbody = document.getElementById('semester-history-tbody');
+  if (semHistoryTbody) {
+    if (!records || records.length === 0) {
+      semHistoryTbody.innerHTML = `<tr><td colspan="7" class="px-6 py-6 text-center text-slate-400 text-xs">No academic records recorded yet. Click '+ Add / Update Semester Record' to enter details.</td></tr>`;
+    } else {
+      // Sort descending by semester
+      const sortedRecords = [...records].sort((a, b) => b.semester - a.semester);
+      semHistoryTbody.innerHTML = sortedRecords.map(ar => {
+        const isDefaulter = ar.defaulter_flag || ar.attendance_percentage < 75 || ar.subjects_failed_count > 0;
+        return `
+          <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+            <td class="px-6 py-3.5 font-bold text-slate-800 text-xs">
+              Semester ${ar.semester}
+              ${ar.semester === currentStudent?.semester ? '<span class="ml-1.5 px-1.5 py-0.5 text-[9px] bg-blue-100 text-blue-800 rounded font-semibold">Current</span>' : '<span class="ml-1.5 text-[10px] text-slate-400 font-normal">Past Sem</span>'}
+            </td>
+            <td class="px-6 py-3.5 font-mono font-bold text-blue-700 text-xs">${ar.cgpa ? Number(ar.cgpa).toFixed(2) : '--'}</td>
+            <td class="px-6 py-3.5 font-mono text-xs ${ar.attendance_percentage < 75 ? 'text-rose-600 font-bold' : 'text-slate-700'}">${ar.attendance_percentage}%</td>
+            <td class="px-6 py-3.5 font-mono text-slate-600 text-[11px]">ISE: ${ar.ise_marks || '--'} | MSE: ${ar.mse_marks || '--'} | ESE: ${ar.ese_marks || '--'}</td>
+            <td class="px-6 py-3.5 text-xs">
+              ${ar.subjects_failed_count > 0 ? `<span class="px-2 py-0.5 rounded text-[10px] bg-rose-50 text-rose-700 font-semibold">${ar.subjects_failed_count} Backlog(s)</span>` : '<span class="text-emerald-600 text-xs font-semibold">0 (Clear)</span>'}
+            </td>
+            <td class="px-6 py-3.5 text-xs">
+              ${isDefaulter ? `<span class="px-2 py-0.5 rounded text-[10px] bg-rose-100 text-rose-800 font-bold">Defaulter Flag</span>` : `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 font-bold">Good Standing</span>`}
+            </td>
+            <td class="px-6 py-3.5 text-right text-xs">
+              <button onclick="openAcademicModal(${ar.semester})" class="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded border border-blue-200 transition">
+                Edit
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  // 2. Populate Current Semester Subject Breakdown Table
   const tbody = document.getElementById('academic-table-tbody');
   if (tbody) {
-    tbody.innerHTML = subjectMarks.map(s => `
-      <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
-        <td class="px-6 py-4 font-semibold text-slate-800 text-sm">${s.subject}</td>
-        <td class="px-6 py-4 text-slate-600 text-sm font-mono">${s.internal} / 30</td>
-        <td class="px-6 py-4 text-slate-600 text-sm font-mono">${s.exam} / 70</td>
-        <td class="px-6 py-4 font-bold text-blue-600 text-sm font-mono">${s.total} / 100</td>
-        <td class="px-6 py-4 text-sm font-bold text-slate-900">${s.grade}</td>
-      </tr>
-    `).join('');
+    if (!subjectMarks || subjectMarks.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-400 text-xs">No subject records available.</td></tr>`;
+    } else {
+      tbody.innerHTML = subjectMarks.map(s => `
+        <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+          <td class="px-6 py-3.5 font-semibold text-slate-800 text-xs">${s.subject}</td>
+          <td class="px-6 py-3.5 text-slate-600 text-xs font-mono">${s.internal} / 30</td>
+          <td class="px-6 py-3.5 text-slate-600 text-xs font-mono">${s.exam} / 70</td>
+          <td class="px-6 py-3.5 font-bold text-blue-600 text-xs font-mono">${s.total} / 100</td>
+          <td class="px-6 py-3.5 text-xs font-bold text-slate-900">${s.grade}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  const curBadge = document.getElementById('current-sem-badge');
+  if (curBadge && currentStudent) {
+    curBadge.textContent = `Semester ${currentStudent.semester || 5}`;
   }
 
   const latest = records && records[0] ? records[0] : { attendance_percentage: 82.45, subjects_failed_count: 0 };
-  document.getElementById('acad-overall-attendance').textContent = `${latest.attendance_percentage}%`;
-  document.getElementById('acad-below-attendance').textContent = `${latest.subjects_failed_count} Subjects`;
-  document.getElementById('acad-overall-performance').textContent = latest.defaulter_flag ? 'Needs Guidance' : 'Good Academic Progress';
+  const attEl = document.getElementById('acad-overall-attendance');
+  if (attEl) attEl.textContent = `${latest.attendance_percentage}%`;
+  const belEl = document.getElementById('acad-below-attendance');
+  if (belEl) belEl.textContent = `${latest.subjects_failed_count} Subjects`;
+  const perfEl = document.getElementById('acad-overall-performance');
+  if (perfEl) perfEl.textContent = latest.defaulter_flag ? 'Needs Guidance' : 'Good Academic Standing';
+}
+
+function openAcademicModal(semester) {
+  const modal = document.getElementById('academic-modal');
+  if (!modal) return;
+
+  const semSelect = document.getElementById('acad-modal-sem');
+  const cgpaInput = document.getElementById('acad-modal-cgpa');
+  const attInput = document.getElementById('acad-modal-attendance');
+  const failedInput = document.getElementById('acad-modal-failed');
+  const iseInput = document.getElementById('acad-modal-ise');
+  const mseInput = document.getElementById('acad-modal-mse');
+  const eseInput = document.getElementById('acad-modal-ese');
+  const titleEl = document.getElementById('acad-modal-title');
+
+  const record = semester ? currentAcademicRecords.find(r => r.semester === parseInt(semester)) : null;
+
+  if (record) {
+    if (titleEl) titleEl.textContent = `Update Academic Record — Semester ${record.semester}`;
+    if (semSelect) semSelect.value = String(record.semester);
+    if (cgpaInput) cgpaInput.value = record.cgpa ?? '';
+    if (attInput) attInput.value = record.attendance_percentage ?? '';
+    if (failedInput) failedInput.value = record.subjects_failed_count ?? 0;
+    if (iseInput) iseInput.value = record.ise_marks ?? '';
+    if (mseInput) mseInput.value = record.mse_marks ?? '';
+    if (eseInput) eseInput.value = record.ese_marks ?? '';
+  } else {
+    if (titleEl) titleEl.textContent = 'Add Academic Details (Current or Previous Semester)';
+    if (semSelect) semSelect.value = String(currentStudent?.semester || 5);
+    if (cgpaInput) cgpaInput.value = '';
+    if (attInput) attInput.value = '';
+    if (failedInput) failedInput.value = '0';
+    if (iseInput) iseInput.value = '';
+    if (mseInput) mseInput.value = '';
+    if (eseInput) eseInput.value = '';
+  }
+
+  modal.classList.remove('hidden');
+}
+
+function closeAcademicModal() {
+  const modal = document.getElementById('academic-modal');
+  if (modal) modal.classList.add('hidden');
 }
 
 // Activities View
@@ -168,9 +274,11 @@ function populateActivitiesView(activities) {
       <td class="px-6 py-4 font-semibold text-slate-900 text-sm">${a.title}</td>
       <td class="px-6 py-4 text-xs font-semibold text-blue-600 uppercase"><span class="px-2 py-0.5 bg-blue-50 border border-blue-100 rounded">${a.category}</span></td>
       <td class="px-6 py-4 text-slate-500 text-xs font-mono">${a.date_achieved ? new Date(a.date_achieved).toLocaleDateString() : ''}</td>
-      <td class="px-6 py-4 text-xs"><a href="#" class="text-blue-600 underline font-medium">${a.evidence_url || 'certificate.pdf'}</a></td>
+      <td class="px-6 py-4 text-xs"><a href="#" onclick="alert('Viewing certificate file: ${a.evidence_url || 'certificate.pdf'}'); return false;" class="text-blue-600 underline font-medium">${a.evidence_url || 'certificate.pdf'}</a></td>
       <td class="px-6 py-4 text-sm">${getActivityStatusBadge(a.status)}</td>
-      <td class="px-6 py-4 text-xs text-slate-400">Mentor Verification Pending</td>
+      <td class="px-6 py-4 text-xs font-mono ${a.status === 'Approved' ? 'text-emerald-700' : (a.status === 'Rejected' ? 'text-rose-600' : 'text-slate-500')}">
+        ${a.mentor_remarks || (a.status === 'Approved' ? 'Verified by Mentor' : (a.status === 'Rejected' ? 'Rejected by Mentor' : 'Verification Pending'))}
+      </td>
     </tr>
   `).join('');
 }
@@ -210,16 +318,28 @@ function renderMeetingsTable(meetings, tbodyId) {
     return;
   }
 
-  tbody.innerHTML = meetings.map(m => `
-    <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
-      <td class="px-6 py-4 font-semibold text-slate-900 text-sm">Meeting #${m.meeting_number || 1}</td>
-      <td class="px-6 py-4 text-slate-600 text-xs font-mono">${new Date(m.meeting_date).toLocaleString()}</td>
-      <td class="px-6 py-4 text-slate-600 text-xs">${m.mode || 'Offline'}</td>
-      <td class="px-6 py-4 text-slate-800 text-xs font-medium">${m.agenda}</td>
-      <td class="px-6 py-4 text-sm"><span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">${m.status || 'Scheduled'}</span></td>
-      <td class="px-6 py-4 text-xs font-semibold text-emerald-600">Attended</td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = meetings.map(m => {
+    let attBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">Scheduled</span>';
+    if (m.attendance_status === 'Present') {
+      attBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Present</span>';
+    } else if (m.attendance_status === 'Absent') {
+      attBadge = '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">Absent</span>';
+    }
+
+    return `
+      <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+        <td class="px-6 py-4 font-semibold text-slate-900 text-sm">Meeting #${m.meeting_number || 1}</td>
+        <td class="px-6 py-4 text-slate-600 text-xs font-mono">${new Date(m.meeting_date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+        <td class="px-6 py-4 text-slate-600 text-xs">${m.mode || 'Offline'}</td>
+        <td class="px-6 py-4 text-slate-800 text-xs font-medium">${m.agenda}</td>
+        <td class="px-6 py-4 text-sm"><span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${m.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-blue-50 text-blue-700 border border-blue-200'}">${m.status || 'Scheduled'}</span></td>
+        <td class="px-6 py-4 text-xs font-semibold">
+          ${attBadge}
+          ${m.attendance_remarks ? `<p class="text-[10px] text-slate-500 font-mono mt-0.5">${m.attendance_remarks}</p>` : ''}
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 // Complaints View
@@ -258,12 +378,11 @@ function renderNotificationsList(notifications, containerId) {
   container.innerHTML = notifications.map(n => `
     <div class="p-3 bg-white rounded-xl border border-slate-200 shadow-sm flex items-start space-x-3">
       <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 font-bold flex items-center justify-center text-xs flex-shrink-0">
-        N
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
       </div>
-      <div class="space-y-0.5">
-        <h4 class="font-bold text-slate-900 text-xs">${n.title}</h4>
-        <p class="text-xs text-slate-600">${n.message}</p>
-        <span class="text-[10px] text-slate-400 font-mono">${new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+      <div class="space-y-0.5 flex-1">
+        <p class="text-xs text-slate-800 font-medium leading-relaxed">${n.message}</p>
+        <span class="text-[10px] text-slate-400 font-mono block">${new Date(n.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
       </div>
     </div>
   `).join('');

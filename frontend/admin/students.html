@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Students Directory — Admin Portal</title>
+    <title>Students Directory — AI & DS Admin Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
@@ -13,14 +13,14 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <span class="font-bold text-base tracking-tight">Mentor-Mentee System</span>
-                <span class="bg-indigo-500/20 text-indigo-300 text-[10px] px-2.5 py-0.5 rounded-full border border-indigo-500/30 font-semibold uppercase">ADMIN</span>
+                <span class="bg-indigo-500/20 text-indigo-300 text-[10px] px-2.5 py-0.5 rounded-full border border-indigo-500/30 font-semibold uppercase">AI & DS ADMIN</span>
             </div>
             
             <nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
                 <a href="/admin/dashboard.html" class="text-slate-300 hover:text-white py-5">Dashboard</a>
                 <a href="/admin/mentors.html" class="text-slate-300 hover:text-white py-5">Mentors</a>
                 <a href="/admin/students.html" class="text-indigo-400 font-semibold border-b-2 border-indigo-500 py-5">Students</a>
-                <a href="/admin/batches.html" class="text-slate-300 hover:text-white py-5">Batches</a>
+                <a href="/admin/batches.html" class="text-slate-300 hover:text-white py-5">Divisions & Batches</a>
             </nav>
 
             <div class="flex items-center space-x-4">
@@ -33,22 +33,64 @@
 
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         
+        <!-- Top Back Navigation Bar -->
+        <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+            <a href="/admin/dashboard.html" 
+               class="inline-flex items-center px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-md border border-slate-200 shadow-sm transition">
+                <span>Back to Dashboard</span>
+            </a>
+            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-[11px] font-bold rounded-lg border border-indigo-100 uppercase tracking-wide">AI & DS Department</span>
+        </div>
+
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-slate-900">Student Directory</h1>
-                <p class="text-xs text-slate-500">Register students, assign batches, and track academic performance levels.</p>
             </div>
-            <button onclick="openModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow transition flex items-center space-x-1">
-                <span>+ Register New Student</span>
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="openModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow transition flex items-center space-x-1">
+                    <span>+ Register Student</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Class Filter Bar for Students -->
+        <div class="shadcn-card p-4 bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center mr-1">
+                    <svg class="w-4 h-4 mr-1 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                    Class Filter:
+                </span>
+                <div class="flex flex-wrap gap-1" id="student-class-pills">
+                    <button type="button" onclick="setStudentClassFilter('ALL')" data-sfilter="ALL" class="student-pill px-3 py-1.5 text-xs font-bold rounded-lg transition bg-indigo-600 text-white shadow-sm">All Students</button>
+                    <button type="button" onclick="setStudentClassFilter('1')" data-sfilter="1" class="student-pill px-3 py-1.5 text-xs font-semibold rounded-lg transition bg-slate-100 hover:bg-slate-200 text-slate-700">FY (1st Year)</button>
+                    <button type="button" onclick="setStudentClassFilter('2')" data-sfilter="2" class="student-pill px-3 py-1.5 text-xs font-semibold rounded-lg transition bg-slate-100 hover:bg-slate-200 text-slate-700">SY (2nd Year)</button>
+                    <button type="button" onclick="setStudentClassFilter('3')" data-sfilter="3" class="student-pill px-3 py-1.5 text-xs font-semibold rounded-lg transition bg-slate-100 hover:bg-slate-200 text-slate-700">TY (3rd Year)</button>
+                    <button type="button" onclick="setStudentClassFilter('4')" data-sfilter="4" class="student-pill px-3 py-1.5 text-xs font-semibold rounded-lg transition bg-slate-100 hover:bg-slate-200 text-slate-700">BTECH (Final Year)</button>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <label for="student-div-filter-select" class="text-xs font-semibold text-slate-600">Division:</label>
+                <select id="student-div-filter-select" onchange="setStudentDivisionFilter(this.value)" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="ALL">All Divisions</option>
+                </select>
+
+                <label for="student-batch-filter-select" class="text-xs font-semibold text-slate-600 ml-1">Batch:</label>
+                <select id="student-batch-filter-select" onchange="setStudentBatchFilter(this.value)" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="ALL">All Batches</option>
+                </select>
+
+                <span id="student-filter-count-badge" class="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-md border border-indigo-100 whitespace-nowrap">
+                    20 Students
+                </span>
+            </div>
         </div>
 
         <!-- Students Table Card -->
         <div class="shadcn-card overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between gap-4">
-                <h3 class="font-bold text-slate-900 text-base">Enrolled Students</h3>
+                <h3 class="font-bold text-slate-900 text-base">Enrolled Students (AI & DS)</h3>
                 <div class="w-full sm:w-64">
-                    <input type="text" id="student-search" placeholder="Search student name, URN, roll..." 
+                    <input type="text" id="student-search" placeholder="Search name, URN, roll, div..." 
                            class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
             </div>
@@ -59,14 +101,15 @@
                         <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
                             <th class="px-6 py-3">Roll No</th>
                             <th class="px-6 py-3">Student Name</th>
-                            <th class="px-6 py-3">URN</th>
-                            <th class="px-6 py-3">Department & Div</th>
+                            <th class="px-6 py-3">User ID (URN)</th>
+                            <th class="px-6 py-3">Year & Division</th>
                             <th class="px-6 py-3">Assigned Batch</th>
                             <th class="px-6 py-3">Performance Category</th>
+                            <th class="px-6 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="students-tbody">
-                        <tr><td colspan="6" class="px-6 py-8 text-center text-slate-400 text-sm">Loading student records...</td></tr>
+                        <tr><td colspan="7" class="px-6 py-8 text-center text-slate-400 text-sm">Loading student records...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -77,39 +120,51 @@
     <div id="student-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="font-bold text-slate-900 text-lg">Register New Student</h3>
+                <h3 class="font-bold text-slate-900 text-lg">Register Student (AI & DS)</h3>
                 <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
             </div>
 
             <form id="create-student-form" class="space-y-3">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Full Name</label>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Full Student Name</label>
                     <input type="text" id="s-name" required placeholder="e.g. Aarav Sharma" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
+
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">URN</label>
-                        <input type="text" id="s-urn" required placeholder="e.g. URN2024021" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Roll No</label>
-                        <input type="text" id="s-roll" required placeholder="e.g. CSE-21" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Email Address</label>
-                    <input type="email" id="s-email" required placeholder="e.g. aarav@student.mms.edu" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Department</label>
-                        <input type="text" id="s-dept" required placeholder="Computer Engineering" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Academic Year</label>
+                        <select id="s-year" required onchange="handleStudentYearChange('s-year', 's-div', 'modal-student-batch')" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="1">FY (First Year)</option>
+                            <option value="2">SY (Second Year)</option>
+                            <option value="3">TY (Third Year)</option>
+                            <option value="4">BTECH (Final Year)</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Division</label>
-                        <input type="text" id="s-div" required placeholder="A" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        <select id="s-div" required onchange="handleStudentDivChange('s-year', 's-div', 'modal-student-batch')" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="A">Division A</option>
+                            <option value="B">Division B</option>
+                        </select>
                     </div>
                 </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Class Roll No</label>
+                        <input type="text" id="s-roll" required placeholder="e.g. AIDS-01" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Custom User ID (Optional)</label>
+                        <input type="text" id="s-urn" placeholder="Leave blank to auto-generate" maxlength="8" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Email (Optional)</label>
+                    <input type="email" id="s-email" placeholder="e.g. aarav@student.mms.edu" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Batch Allocation</label>
                     <select id="modal-student-batch" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
@@ -117,9 +172,75 @@
                     </select>
                 </div>
 
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Password (Optional)</label>
+                    <input type="text" id="s-pass" placeholder="Leave blank to auto-generate 8-char password" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
                 <div class="pt-2 flex space-x-2">
-                    <button type="button" onclick="closeModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200">Cancel</button>
-                    <button type="submit" class="w-1/2 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-500">Save Student</button>
+                    <button type="button" onclick="closeModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200 transition">← Back / Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-500 transition">Register & Generate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Student Modal -->
+    <div id="edit-student-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-lg">Edit Student Record</h3>
+                <button onclick="closeEditStudentModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            </div>
+
+            <form id="edit-student-form" class="space-y-3" onsubmit="handleUpdateStudent(event)">
+                <input type="hidden" id="edit-s-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Full Name</label>
+                    <input type="text" id="edit-s-name" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">8-Char User ID (Read-Only)</label>
+                        <input type="text" id="edit-s-urn" disabled class="w-full px-3 py-2 border border-slate-200 bg-slate-100 text-indigo-700 font-bold font-mono rounded-lg text-sm cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Roll No</label>
+                        <input type="text" id="edit-s-roll" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Email Address</label>
+                    <input type="email" id="edit-s-email" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Year</label>
+                        <select id="edit-s-year" onchange="handleStudentYearChange('edit-s-year', 'edit-s-div', 'edit-s-batch')" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="1">FY (First Year)</option>
+                            <option value="2">SY (Second Year)</option>
+                            <option value="3">TY (Third Year)</option>
+                            <option value="4">BTECH (Final Year)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Division</label>
+                        <select id="edit-s-div" required onchange="handleStudentDivChange('edit-s-year', 'edit-s-div', 'edit-s-batch')" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="A">Division A</option>
+                            <option value="B">Division B</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Batch Allocation</label>
+                    <select id="edit-s-batch" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Select Batch (Optional)</option>
+                    </select>
+                </div>
+
+                <div class="pt-2 flex space-x-2">
+                    <button type="button" onclick="closeEditStudentModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200 transition">← Back / Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-500 transition">Update Student</button>
                 </div>
             </form>
         </div>
@@ -129,27 +250,49 @@
     <script src="/assets/js/auth.js"></script>
     <script src="/assets/js/admin.js"></script>
     <script>
-        function openModal() { document.getElementById('student-modal').classList.remove('hidden'); }
+        function openModal() { 
+            if (typeof activeStudentClassFilter !== 'undefined' && activeStudentClassFilter !== 'ALL') {
+                const yr = document.getElementById('s-year');
+                if (yr) yr.value = activeStudentClassFilter;
+            }
+            const targetDiv = (typeof activeStudentDivisionFilter !== 'undefined' && activeStudentDivisionFilter !== 'ALL')
+                ? activeStudentDivisionFilter
+                : null;
+            if (typeof updateStudentDivisionOptions === 'function') {
+                updateStudentDivisionOptions('s-year', 's-div', targetDiv);
+            }
+            if (typeof updateStudentBatchOptions === 'function') {
+                updateStudentBatchOptions('s-year', 's-div', 'modal-student-batch');
+            }
+            document.getElementById('student-modal').classList.remove('hidden'); 
+        }
         function closeModal() { document.getElementById('student-modal').classList.add('hidden'); }
 
         document.getElementById('create-student-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const body = {
                 name: document.getElementById('s-name').value.trim(),
-                urn: document.getElementById('s-urn').value.trim(),
+                urn: document.getElementById('s-urn').value.trim() || undefined,
                 roll_no: document.getElementById('s-roll').value.trim(),
-                email: document.getElementById('s-email').value.trim(),
-                department: document.getElementById('s-dept').value.trim(),
-                division: document.getElementById('s-div').value.trim(),
+                year: parseInt(document.getElementById('s-year').value),
+                division: document.getElementById('s-div').value.trim().toUpperCase(),
+                email: document.getElementById('s-email').value.trim() || undefined,
                 batch_id: document.getElementById('modal-student-batch').value || null,
-                password: 'password123'
+                password: document.getElementById('s-pass').value.trim() || undefined
             };
+
             const res = await API.post('/admin/students', body);
             if (res.success) {
                 closeModal();
-                loadAdminStudents();
+                document.getElementById('create-student-form').reset();
+                await loadAdminStudents();
+                if (res.credentials) {
+                    showCredentialsModal(res.credentials, 'STUDENT');
+                } else {
+                    showToast('Student registered successfully');
+                }
             } else {
-                alert(res.message || 'Error registering student');
+                showToast(res.message || 'Error registering student', 'error');
             }
         });
     </script>
