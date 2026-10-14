@@ -70,6 +70,11 @@ async function runTests() {
   console.log('  Total Students:', dashRes.body.totalStudents);
   console.log('  ML Risk Breakdown:', dashRes.body.mlRiskSummary);
 
+  if (dashRes.body.totalStudents !== 20) {
+    console.error('FAIL: Expected exactly 20 total students, got:', dashRes.body.totalStudents);
+    process.exit(1);
+  }
+
   if (dashRes.body.assignedBatch.name !== 'CSE-2024-A') {
     console.error('FAIL: Expected batch CSE-2024-A, got:', dashRes.body.assignedBatch.name);
     process.exit(1);
@@ -83,6 +88,10 @@ async function runTests() {
     process.exit(1);
   }
   const students = studentsRes.body.students;
+  if (students.length !== 20) {
+    console.error('FAIL: Expected 20 assigned students in roster, got:', students.length);
+    process.exit(1);
+  }
   console.log(`PASS: Found ${students.length} assigned students:`);
   students.forEach(s => console.log(`   - Roll: ${s.roll_no} | Name: ${s.name} | Risk: ${s.ml_risk_level}`));
 
@@ -100,8 +109,8 @@ async function runTests() {
   console.log('  ML Demo Result:', stDetailRes.body.mlDemoResult);
 
   // 5. TEST STRICT BATCH ISOLATION (UNAUTHORIZED STUDENT)
-  console.log('\n[TEST 5] Strict Batch Isolation: Accessing Student from Batch 2 (Student ID 6: CSE-06)...');
-  const forbiddenRes = await request('GET', '/api/mentor/students/6', null, token);
+  console.log('\n[TEST 5] Strict Batch Isolation: Accessing Student from Batch 2 (Student ID 21: CSE-21)...');
+  const forbiddenRes = await request('GET', '/api/mentor/students/21', null, token);
   if (forbiddenRes.status === 403) {
     console.log('PASS: Strictly blocked with 403 Forbidden! Message:', forbiddenRes.body.message);
   } else {

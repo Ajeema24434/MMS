@@ -47,15 +47,15 @@ async function runEdgeCaseTests() {
   const token2 = m2Login.body.token;
 
   console.log('\n[EDGE TEST 1] Bilateral Batch Isolation on Students');
-  // Mentor 1 tries to access Student 6 (Batch 2) -> must fail (403)
-  const r1 = await request('GET', '/api/mentor/students/6', null, token1);
+  // Mentor 1 tries to access Student 21 (Batch 2) -> must fail (403)
+  const r1 = await request('GET', '/api/mentor/students/21', null, token1);
   // Mentor 2 tries to access Student 1 (Batch 1) -> must fail (403)
   const r2 = await request('GET', '/api/mentor/students/1', null, token2);
 
   if (r1.status === 403 && r2.status === 403) {
     console.log('PASS: Bilateral isolation confirmed! Both mentors denied cross-batch student access.');
   } else {
-    console.error(`FAIL: Expected both 403, got m1->s6: ${r1.status}, m2->s1: ${r2.status}`);
+    console.error(`FAIL: Expected both 403, got m1->s21: ${r1.status}, m2->s1: ${r2.status}`);
     process.exit(1);
   }
 
@@ -103,8 +103,8 @@ async function runEdgeCaseTests() {
   const absentVal = meeting1Row.getCell(7).value;
 
   console.log(`PASS: Report 1 updated dynamically -> Present: ${presentVal}, Absent: "${absentVal}"`);
-  if (presentVal !== 4 || !String(absentVal).includes('CSE-02')) {
-    console.error('FAIL: Expected CSE-02 to be absent in Report 1 row 6, got:', absentVal);
+  if (presentVal !== 17 || !String(absentVal).includes('CSE-02')) {
+    console.error('FAIL: Expected CSE-02 to be absent and 17 present in Report 1 row 6, got:', absentVal);
     process.exit(1);
   }
 
