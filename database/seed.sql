@@ -142,3 +142,16 @@ INSERT INTO notifications (id, user_id, title, message, type, is_read, created_a
 (2, 6, 'Meeting Scheduled', 'New mentoring meeting #2 scheduled for Aug 28, 2:00 PM in Lab 4.', 'Info', 0, '2024-08-15 15:00:00'),
 (3, 6, 'Complaint Response Updated', 'Dr. Ramesh Sharma updated response for "Difficulty in Machine Learning Subject".', 'Warning', 0, '2024-08-14 11:30:00'),
 (4, 6, 'Mentor Advice Added', 'New guidance note added: Focus on DBMS lab submissions and complete NPTEL credits.', 'Info', 1, '2024-08-10 16:00:00');
+
+-- 11. Insert Attendance (Meeting 1 for Batch 1, Meeting 3 for Batch 2)
+INSERT INTO attendance (id, meeting_id, student_id, status, remarks) VALUES
+(1, 1, 1, 'Present', 'Attended on time'),
+(2, 1, 2, 'Present', 'Attended on time'),
+(3, 1, 3, 'Absent', 'Makeup exam'),
+(4, 1, 4, 'Present', 'Attended on time'),
+(5, 1, 5, 'Present', 'Attended on time'),
+(6, 3, 6, 'Present', 'Attended on time'),
+(7, 3, 7, 'Absent', 'Medical leave'),
+(8, 3, 8, 'Present', 'Attended on time'),
+(9, 3, 9, 'Present', 'Attended on time'),
+(10, 3, 10, 'Present', 'Attended on time');

@@ -5,19 +5,22 @@ const Database = require('better-sqlite3');
 const logger = require('../utils/logger');
 require('dotenv').config();
 
-let dbType = 'MYSQL'; // 'MYSQL' or 'SQLITE'
+let dbType = null; // 'MYSQL' or 'SQLITE'
 let mysqlPool = null;
 let sqliteDb = null;
+let initPromise = null;
 
-async function initDB() {
-  const dbHost = process.env.DB_HOST || 'localhost';
-  const dbUser = process.env.DB_USER || 'root';
-  const dbPassword = process.env.DB_PASSWORD || 'root';
-  const dbName = process.env.DB_NAME || 'mentor_mentee';
+function initDB() {
+  if (initPromise) return initPromise;
+  initPromise = (async () => {
+    const dbHost = process.env.DB_HOST || 'localhost';
+    const dbUser = process.env.DB_USER || 'root';
+    const dbPassword = process.env.DB_PASSWORD || 'root';
+    const dbName = process.env.DB_NAME || 'mentor_mentee';
 
-  try {
-    // Try connecting to MySQL
-    mysqlPool = mysql.createPool({
+    try {
+      // Try connecting to MySQL
+      mysqlPool = mysql.createPool({
       host: dbHost,
       user: dbUser,
       password: dbPassword,
@@ -77,6 +80,8 @@ async function initDB() {
       }
     }
   }
+  })();
+  return initPromise;
 }
 
 async function query(sql, params = []) {

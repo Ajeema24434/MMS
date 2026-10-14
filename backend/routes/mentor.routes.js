@@ -13,9 +13,14 @@ router.get('/dashboard', mentorController.getMentorDashboard);
 router.get('/students', mentorController.getAssignedStudents);
 router.get('/students/:id', mentorController.getStudentDetail);
 
-// Common Meeting Agenda
+// Meetings Management
 router.post('/meetings', mentorController.createMeeting);
 router.get('/meetings', mentorController.getMeetings);
+router.put('/meetings/:id', mentorController.updateMeeting);
+
+// Meeting Attendance
+router.get('/meetings/:meetingId/attendance', mentorController.getMeetingAttendance);
+router.post('/meetings/:meetingId/attendance', mentorController.saveMeetingAttendance);
 
 // Complaints Management
 router.get('/complaints', mentorController.getComplaints);

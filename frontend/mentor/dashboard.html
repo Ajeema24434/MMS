@@ -60,13 +60,17 @@
             </div>
         </div>
 
+        <!-- Global Status Notification Banner -->
+        <div id="global-alert" class="hidden p-3 rounded-lg text-xs font-semibold border transition"></div>
+
         <!-- Navigation Tabs -->
-        <div class="border-b border-slate-200 flex space-x-2">
+        <div class="border-b border-slate-200 flex flex-wrap gap-1 sm:gap-2">
             <button class="tab-btn active" data-tab="roster">Mentees Roster</button>
-            <button class="tab-btn" data-tab="reports">Excel Report Generation</button>
-            <button class="tab-btn" data-tab="meetings">Common Meeting Agenda</button>
+            <button class="tab-btn" data-tab="attendance">Meeting Attendance</button>
+            <button class="tab-btn" data-tab="meetings">Batch Meetings</button>
             <button class="tab-btn" data-tab="complaints">Mentee Complaints</button>
-            <button class="tab-btn" data-tab="ml-summary">Performance Risk Insights</button>
+            <button class="tab-btn" data-tab="reports">Excel Reports</button>
+            <button class="tab-btn" data-tab="ml-summary">Performance Insights</button>
         </div>
 
         <!-- TAB 1: MENTEES ROSTER -->
@@ -75,10 +79,10 @@
                 <div class="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                         <h3 class="font-bold text-slate-900 text-base">Assigned Mentees Roster</h3>
-                        <p class="text-xs text-slate-500">Only mentees in your assigned batch are visible</p>
+                        <p class="text-xs text-slate-500">Only students assigned to your batch are accessible (strict batch isolation enforced)</p>
                     </div>
                     <div class="w-full sm:w-64">
-                        <input type="text" id="mentor-student-search" placeholder="Search mentee name, URN, roll..." 
+                        <input type="text" id="mentor-student-search" placeholder="Search by name, roll no, URN..."
                                class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                 </div>
@@ -91,7 +95,7 @@
                                 <th class="px-6 py-3">Student Name</th>
                                 <th class="px-6 py-3">URN</th>
                                 <th class="px-6 py-3">Division</th>
-                                <th class="px-6 py-3">Performance Category</th>
+                                <th class="px-6 py-3">ML Performance Level</th>
                                 <th class="px-6 py-3">Action</th>
                             </tr>
                         </thead>
@@ -103,87 +107,110 @@
             </div>
         </div>
 
-        <!-- TAB 2: AUTOMATIC EXCEL REPORT GENERATION -->
-        <div id="tab-reports" class="tab-content hidden space-y-6 animate-fade-in">
+        <!-- TAB 2: MEETING ATTENDANCE -->
+        <div id="tab-attendance" class="tab-content hidden space-y-6 animate-fade-in">
             <div class="shadcn-card p-6 space-y-6 bg-white">
-                <div class="border-b border-slate-200 pb-4">
-                    <h3 class="font-bold text-slate-900 text-lg">AUTOMATIC EXCEL REPORT GENERATION</h3>
-                    <p class="text-xs text-slate-500">Generate and download official college mentoring Excel reports (.xlsx) matching exact college format.</p>
+                <div class="border-b border-slate-200 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">Mentoring Meeting Attendance</h3>
+                        <p class="text-xs text-slate-500">Select a meeting from your batch to mark or edit student attendance (Present/Absent).</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label for="att-meeting-select" class="text-xs font-semibold text-slate-700 whitespace-nowrap">Select Meeting:</label>
+                        <select id="att-meeting-select" onchange="onMeetingSelectChange()" class="px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 min-w-[240px]">
+                            <option value="">-- Choose a Meeting --</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div id="report-status-msg" class="hidden p-3 rounded bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
-                    Generating report... Please wait.
+                <!-- Active Meeting Details Banner -->
+                <div id="att-meeting-info" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+                    <div>
+                        <p class="text-[10px] text-slate-400 uppercase font-semibold">Meeting Number & Mode</p>
+                        <p id="att-info-title" class="font-bold text-slate-800 mt-0.5">--</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 uppercase font-semibold">Date</p>
+                        <p id="att-info-date" class="font-bold text-slate-800 mt-0.5">--</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 uppercase font-semibold">Agenda</p>
+                        <p id="att-info-agenda" class="font-bold text-slate-800 truncate mt-0.5">--</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 uppercase font-semibold">Status</p>
+                        <p id="att-info-status" class="font-bold text-slate-800 mt-0.5">--</p>
+                    </div>
                 </div>
 
-                <!-- 4 Excel Report Download Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    
-                    <!-- Report 1 -->
-                    <div class="p-5 border border-slate-200 rounded-xl bg-slate-50 space-y-3 flex flex-col justify-between">
-                        <div>
-                            <span class="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded uppercase">Report 1</span>
-                            <h4 class="font-bold text-slate-900 text-base mt-1">Cumulative Mentoring Report</h4>
-                            <p class="text-xs text-slate-600 mt-1">Meeting agendas, points discussed, attendance counts, key findings, and assignments undertaken.</p>
-                        </div>
-                        <button onclick="downloadReport(1)" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg shadow transition">
-                            Download Report 1 (.xlsx)
+                <!-- Stats & Bulk Actions -->
+                <div id="att-action-bar" class="hidden flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-indigo-50/70 p-4 rounded-xl border border-indigo-100">
+                    <div class="flex items-center space-x-4 text-xs">
+                        <div><span class="text-slate-500">Total Mentees:</span> <strong id="att-stat-total" class="text-slate-800 font-mono">0</strong></div>
+                        <div class="w-px h-4 bg-slate-300"></div>
+                        <div><span class="text-emerald-700 font-semibold">Present:</span> <strong id="att-stat-present" class="text-emerald-700 font-mono">0</strong></div>
+                        <div class="w-px h-4 bg-slate-300"></div>
+                        <div><span class="text-rose-700 font-semibold">Absent:</span> <strong id="att-stat-absent" class="text-rose-700 font-mono">0</strong></div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="markAllAttendance('Present')" class="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-semibold rounded border border-emerald-300 transition">
+                            ✓ Mark All Present
+                        </button>
+                        <button type="button" onclick="markAllAttendance('Absent')" class="px-3 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs font-semibold rounded border border-rose-300 transition">
+                            ✕ Mark All Absent
                         </button>
                     </div>
+                </div>
 
-                    <!-- Report 2 -->
-                    <div class="p-5 border border-slate-200 rounded-xl bg-slate-50 space-y-3 flex flex-col justify-between">
-                        <div>
-                            <span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[10px] font-bold rounded uppercase">Report 2</span>
-                            <h4 class="font-bold text-slate-900 text-base mt-1">Academic Progress Report</h4>
-                            <p class="text-xs text-slate-600 mt-1">Subject-wise marks, ISE/MSE/ESE scores, attendance percentages, and faculty observations.</p>
-                        </div>
-                        <button onclick="downloadReport(2)" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg shadow transition">
-                            Download Report 2 (.xlsx)
+                <!-- Attendance Table -->
+                <div id="att-table-container" class="hidden overflow-x-auto space-y-4">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                <th class="px-6 py-3">Roll No</th>
+                                <th class="px-6 py-3">Student Name</th>
+                                <th class="px-6 py-3">URN</th>
+                                <th class="px-6 py-3 text-center">Attendance Status</th>
+                                <th class="px-6 py-3">Remarks / Reason (Optional)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-tbody">
+                        </tbody>
+                    </table>
+
+                    <div class="flex items-center justify-between pt-2">
+                        <span id="att-save-status" class="text-xs text-slate-500"></span>
+                        <button id="save-attendance-btn" onclick="saveAttendance()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg shadow-md transition flex items-center space-x-2">
+                            <span>Save Attendance</span>
                         </button>
                     </div>
+                </div>
 
-                    <!-- Report 3 -->
-                    <div class="p-5 border border-slate-200 rounded-xl bg-slate-50 space-y-3 flex flex-col justify-between">
-                        <div>
-                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded uppercase">Report 3</span>
-                            <h4 class="font-bold text-slate-900 text-base mt-1">Students' Progress Report</h4>
-                            <p class="text-xs text-slate-600 mt-1">Co-curricular achievements: NPTEL, Internships, Trainings, Software, Workshops, Sports & NSS.</p>
-                        </div>
-                        <button onclick="downloadReport(3)" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-lg shadow transition">
-                            Download Report 3 (.xlsx)
-                        </button>
-                    </div>
-
-                    <!-- Report 4 -->
-                    <div class="p-5 border border-slate-200 rounded-xl bg-slate-50 space-y-3 flex flex-col justify-between">
-                        <div>
-                            <span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded uppercase">Report 4</span>
-                            <h4 class="font-bold text-slate-900 text-base mt-1">Analysis of Mentees Report</h4>
-                            <p class="text-xs text-slate-600 mt-1">Categorized mentee classification (Bright, Average, Weak), student roll number counts, and recommendations.</p>
-                        </div>
-                        <button onclick="downloadReport(4)" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs rounded-lg shadow transition">
-                            Download Report 4 (.xlsx)
-                        </button>
-                    </div>
-
+                <!-- Placeholder when no meeting is chosen -->
+                <div id="att-placeholder" class="py-12 text-center text-slate-400 space-y-2">
+                    <svg class="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    <p class="text-sm font-medium text-slate-600">Please select a batch meeting above to view and record attendance.</p>
+                    <p class="text-xs text-slate-400">If no meetings exist yet, switch to the "Batch Meetings" tab to schedule one.</p>
                 </div>
             </div>
         </div>
 
-        <!-- TAB 3: COMMON MEETING AGENDA -->
+        <!-- TAB 3: BATCH MEETINGS -->
         <div id="tab-meetings" class="tab-content hidden space-y-6 animate-fade-in">
             <div class="shadcn-card p-6 space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
                     <div>
-                        <h3 class="font-bold text-slate-900 text-base">Common Meeting Agenda Automation</h3>
-                        <p class="text-xs text-slate-500">Add meeting agenda once — automatically applies to all students in your assigned batch</p>
+                        <h3 class="font-bold text-slate-900 text-base">Batch Mentoring Meetings</h3>
+                        <p class="text-xs text-slate-500">Manage meetings, discussion topics, findings, assignments, and take mentee attendance.</p>
                     </div>
                     <button onclick="openMeetingModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow transition">
-                        + Create Batch Agenda
+                        + Schedule Meeting
                     </button>
                 </div>
 
-                <div id="meetings-list" class="space-y-3">
+                <div id="meetings-list" class="space-y-4">
                     <p class="text-xs text-slate-400">Loading meeting history...</p>
                 </div>
             </div>
@@ -194,7 +221,7 @@
             <div class="shadcn-card p-6 space-y-4">
                 <div>
                     <h3 class="font-bold text-slate-900 text-base">Mentee Complaints & Queries</h3>
-                    <p class="text-xs text-slate-500">Track and update resolution status for requests submitted by mentees in your batch</p>
+                    <p class="text-xs text-slate-500">Track and update resolution status for requests submitted by mentees in your assigned batch</p>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -217,7 +244,72 @@
             </div>
         </div>
 
-        <!-- TAB 5: PERFORMANCE RISK INSIGHTS -->
+        <!-- TAB 5: AUTOMATIC EXCEL REPORT GENERATION -->
+        <div id="tab-reports" class="tab-content hidden space-y-6 animate-fade-in">
+            <div class="shadcn-card p-6 space-y-6 bg-white">
+                <div class="border-b border-slate-200 pb-4">
+                    <h3 class="font-bold text-slate-900 text-lg">OFFICIAL EXCEL REPORT GENERATION</h3>
+                    <p class="text-xs text-slate-500">Generate and download official college mentoring Excel reports (.xlsx) created from live database records.</p>
+                </div>
+
+                <div id="report-status-msg" class="hidden p-3 rounded-lg text-xs font-semibold border"></div>
+
+                <!-- 4 Excel Report Download Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- Report 1 -->
+                    <div class="p-5 border border-slate-200 rounded-xl bg-slate-50 space-y-3 flex flex-col justify-between">
+                        <div>
+                            <span class="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded uppercase">Report 1</span>
+                            <h4 class="font-bold text-slate-900 text-base mt-1">Cumulative Mentoring Report</h4>
+                            <p class="text-xs text-slate-600 mt-1">Meeting agendas, points discussed, real attendance counts (Present/Absent with roll numbers), key findings, and assignments undertaken.</p>
+                        </div>
+                        <button id="btn-report-1" onclick="downloadReport(1)" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg shadow transition flex items-center justify-center space-x-2">
+                            <span>Download Report 1 (.xlsx)</span>
+                        </button>
+                    </div>
+
+                    <!-- Report 2 -->
+                    <div class="p-5 border border-slate-200 rounded-xl bg-slate-50 space-y-3 flex flex-col justify-between">
+                        <div>
+                            <span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[10px] font-bold rounded uppercase">Report 2</span>
+                            <h4 class="font-bold text-slate-900 text-base mt-1">Academic Progress Report</h4>
+                            <p class="text-xs text-slate-600 mt-1">Subject performance, ISE/MSE/ESE marks, CGPA, overall attendance percentages, and faculty observations from academic records.</p>
+                        </div>
+                        <button id="btn-report-2" onclick="downloadReport(2)" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg shadow transition flex items-center justify-center space-x-2">
+                            <span>Download Report 2 (.xlsx)</span>
+                        </button>
+                    </div>
+
+                    <!-- Report 3 -->
+                    <div class="p-5 border border-slate-200 rounded-xl bg-slate-50 space-y-3 flex flex-col justify-between">
+                        <div>
+                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded uppercase">Report 3</span>
+                            <h4 class="font-bold text-slate-900 text-base mt-1">Students' Progress Report</h4>
+                            <p class="text-xs text-slate-600 mt-1">Categorized co-curricular achievements from activities table: NPTEL, Internships, Trainings, Software, Workshops, Sports & NSS.</p>
+                        </div>
+                        <button id="btn-report-3" onclick="downloadReport(3)" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-lg shadow transition flex items-center justify-center space-x-2">
+                            <span>Download Report 3 (.xlsx)</span>
+                        </button>
+                    </div>
+
+                    <!-- Report 4 -->
+                    <div class="p-5 border border-slate-200 rounded-xl bg-slate-50 space-y-3 flex flex-col justify-between">
+                        <div>
+                            <span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded uppercase">Report 4</span>
+                            <h4 class="font-bold text-slate-900 text-base mt-1">Analysis of Mentees Report</h4>
+                            <p class="text-xs text-slate-600 mt-1">Live mentee classification (Bright, Average, Weak), student roll number lists, counts, and targeted mentoring action plans.</p>
+                        </div>
+                        <button id="btn-report-4" onclick="downloadReport(4)" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs rounded-lg shadow transition flex items-center justify-center space-x-2">
+                            <span>Download Report 4 (.xlsx)</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: PERFORMANCE RISK INSIGHTS -->
         <div id="tab-ml-summary" class="tab-content hidden space-y-6 animate-fade-in">
             <div class="shadcn-card p-6 space-y-4">
                 <div>
@@ -230,7 +322,7 @@
                         <div>
                             <p class="text-xs font-semibold text-emerald-800 uppercase tracking-wider">Bright (High Performance)</p>
                             <h4 id="ml-count-bright" class="text-3xl font-extrabold text-emerald-700 mt-1">0</h4>
-                            <p class="text-[11px] text-emerald-600 font-medium mt-1">High academic & attendance score</p>
+                            <p class="text-[11px] text-emerald-600 font-medium mt-1">Consistent attendance & strong exam results</p>
                         </div>
                     </div>
 
@@ -238,7 +330,7 @@
                         <div>
                             <p class="text-xs font-semibold text-amber-800 uppercase tracking-wider">Average (Medium Priority)</p>
                             <h4 id="ml-count-average" class="text-3xl font-extrabold text-amber-700 mt-1">0</h4>
-                            <p class="text-[11px] text-amber-600 font-medium mt-1">Normal academic progress</p>
+                            <p class="text-[11px] text-amber-600 font-medium mt-1">Normal academic progress; room for improvement</p>
                         </div>
                     </div>
 
@@ -246,7 +338,7 @@
                         <div>
                             <p class="text-xs font-semibold text-rose-800 uppercase tracking-wider">Weak (Needs Counseling)</p>
                             <h4 id="ml-count-weak" class="text-3xl font-extrabold text-rose-700 mt-1">0</h4>
-                            <p class="text-[11px] text-rose-600 font-medium mt-1">Low attendance or backlog status</p>
+                            <p class="text-[11px] text-rose-600 font-medium mt-1">Low attendance or backlogs requiring remedial care</p>
                         </div>
                     </div>
                 </div>
@@ -255,45 +347,144 @@
 
     </main>
 
-    <!-- Modal 1: Create Common Meeting Agenda -->
+    <!-- Modal 1: Create Meeting Agenda -->
     <div id="meeting-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 class="font-bold text-slate-900 text-lg">Create Common Meeting Agenda</h3>
+                <h3 class="font-bold text-slate-900 text-lg">Schedule Batch Meeting</h3>
                 <button onclick="closeMeetingModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
             </div>
 
             <form id="meeting-form" class="space-y-3">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Meeting Date & Time</label>
-                    <input type="datetime-local" id="m-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Meeting Date & Time *</label>
+                        <input type="datetime-local" id="m-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Meeting Mode</label>
+                        <select id="m-mode" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Offline / Seminar Hall">Offline / Seminar Hall</option>
+                            <option value="Offline / Lab 4">Offline / Lab 4</option>
+                            <option value="Offline / Room 302">Offline / Room 302</option>
+                            <option value="Online / Google Meet">Online / Google Meet</option>
+                        </select>
+                    </div>
                 </div>
+
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Meeting Mode</label>
-                    <select id="m-mode" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="Offline / Seminar Hall">Offline / Seminar Hall</option>
-                        <option value="Offline / Lab 4">Offline / Lab 4</option>
-                        <option value="Online / Google Meet">Online / Google Meet</option>
-                    </select>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Agenda of Meeting *</label>
+                    <input type="text" id="m-agenda" required placeholder="e.g. Attendance Monitoring, Practical assessment, Exam preparation" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
+
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Agenda / Topic</label>
-                    <input type="text" id="m-agenda" required placeholder="e.g. Discussion regarding internal examination preparation" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Points Discussed</label>
+                    <textarea id="m-discussion" rows="2" placeholder="Key points discussed with students during meeting..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Mentor Remarks / Findings</label>
-                    <textarea id="m-remarks" rows="2" placeholder="Mentor guidance notes for batch..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Key Findings</label>
+                        <textarea id="m-findings" rows="2" placeholder="e.g. 2 students flagged for attendance..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Assignment / Activity</label>
+                        <textarea id="m-assignment" rows="2" placeholder="e.g. Complete NPTEL registration & ISE tasks" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Mentor Remarks</label>
+                        <input type="text" id="m-remarks" placeholder="Additional guidance notes..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Status</label>
+                        <select id="m-status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="pt-2 flex space-x-2">
                     <button type="button" onclick="closeMeetingModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200">Cancel</button>
-                    <button type="submit" class="w-1/2 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-500">Save Batch Agenda</button>
+                    <button type="submit" class="w-1/2 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-500">Save Meeting</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal 2: Update Complaint Status & Remarks -->
+    <!-- Modal 2: Edit Meeting Details -->
+    <div id="edit-meeting-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-lg">Update Meeting Details</h3>
+                <button onclick="closeEditMeetingModal()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            </div>
+
+            <form id="edit-meeting-form" class="space-y-3">
+                <input type="hidden" id="em-id">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Meeting Date & Time</label>
+                        <input type="datetime-local" id="em-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Mode</label>
+                        <select id="em-mode" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Offline / Seminar Hall">Offline / Seminar Hall</option>
+                            <option value="Offline / Lab 4">Offline / Lab 4</option>
+                            <option value="Offline / Room 302">Offline / Room 302</option>
+                            <option value="Online / Google Meet">Online / Google Meet</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Agenda *</label>
+                    <input type="text" id="em-agenda" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Points Discussed</label>
+                    <textarea id="em-discussion" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Key Findings</label>
+                        <textarea id="em-findings" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Assignment / Activity</label>
+                        <textarea id="em-assignment" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Remarks</label>
+                        <input type="text" id="em-remarks" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Status</label>
+                        <select id="em-status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex space-x-2">
+                    <button type="button" onclick="closeEditMeetingModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200">Cancel</button>
+                    <button type="submit" class="w-1/2 py-2 bg-indigo-600 text-white font-semibold text-sm rounded-lg hover:bg-indigo-500">Update Meeting</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 3: Update Complaint Resolution -->
     <div id="complaint-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -305,7 +496,7 @@
                 <input type="hidden" id="cr-id">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Mentee & Complaint</label>
-                    <p id="cr-title" class="p-2.5 bg-slate-50 border border-slate-200 rounded text-xs font-semibold text-slate-800">Student Complaint</p>
+                    <p id="cr-title" class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800">Student Complaint</p>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Status</label>
@@ -335,56 +526,5 @@
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/auth.js"></script>
     <script src="/assets/js/mentor.js"></script>
-    <script>
-        function openMeetingModal() { document.getElementById('meeting-modal').classList.remove('hidden'); }
-        function closeMeetingModal() { document.getElementById('meeting-modal').classList.add('hidden'); }
-
-        function openComplaintResponseModal(id, studentName, title, status, response) {
-            document.getElementById('cr-id').value = id;
-            document.getElementById('cr-title').textContent = `${studentName}: ${title}`;
-            document.getElementById('cr-status').value = status || 'In Progress';
-            document.getElementById('cr-response').value = response || '';
-            document.getElementById('complaint-modal').classList.remove('hidden');
-        }
-
-        function closeComplaintResponseModal() {
-            document.getElementById('complaint-modal').classList.add('hidden');
-        }
-
-        // Submit Meeting Form
-        document.getElementById('meeting-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const body = {
-                meeting_date: document.getElementById('m-date').value,
-                mode: document.getElementById('m-mode').value,
-                agenda: document.getElementById('m-agenda').value.trim(),
-                remarks: document.getElementById('m-remarks').value.trim()
-            };
-            const res = await API.post('/mentor/meetings', body);
-            if (res.success) {
-                closeMeetingModal();
-                loadMentorDashboard();
-            } else {
-                alert(res.message || 'Error saving meeting');
-            }
-        });
-
-        // Submit Complaint Resolution Form
-        document.getElementById('complaint-response-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('cr-id').value;
-            const body = {
-                status: document.getElementById('cr-status').value,
-                mentor_response: document.getElementById('cr-response').value.trim()
-            };
-            const res = await API.put(`/mentor/complaints/${id}/status`, body);
-            if (res.success) {
-                closeComplaintResponseModal();
-                loadMentorDashboard();
-            } else {
-                alert(res.message || 'Error updating complaint');
-            }
-        });
-    </script>
 </body>
 </html>

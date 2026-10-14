@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Profile — Mentor View</title>
+    <title>Mentee Profile — Faculty Mentor View</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col font-sans">
 
+    <!-- Header -->
     <header class="bg-slate-900 text-white shadow-md border-b border-slate-800 sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <span class="font-bold text-base tracking-tight">Mentor–Mentee System</span>
+                <span class="font-bold text-base tracking-tight">Mentor–Mentee Management System</span>
                 <span class="bg-purple-600/30 text-purple-300 text-xs px-2.5 py-0.5 rounded-full border border-purple-500/30 font-medium">MENTEE PROFILE</span>
             </div>
             
             <div class="flex items-center space-x-4">
-                <a href="/mentor/dashboard.html" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded border border-slate-700 transition">
+                <a href="/mentor/dashboard.html" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg border border-slate-700 transition">
                     ← Back to Dashboard
                 </a>
             </div>
@@ -26,45 +27,64 @@
 
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         
-        <!-- Error alert if student belongs to another batch (403 Forbidden) -->
-        <div id="error-box" class="hidden bg-rose-50 border-l-4 border-rose-500 p-4 rounded shadow-sm space-y-2">
+        <!-- Error alert if student belongs to another batch (403 Forbidden - Strict Batch Isolation) -->
+        <div id="error-box" class="hidden bg-rose-50 border-l-4 border-rose-500 p-6 rounded-xl shadow-sm space-y-2">
             <h3 class="font-bold text-rose-800 text-base">403 Forbidden Access</h3>
-            <p id="error-box-msg" class="text-xs text-rose-700">You do not have permission to view students from other batches.</p>
-            <a href="/mentor/dashboard.html" class="inline-block mt-2 px-3 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded hover:bg-rose-700">Return to Your Batch Dashboard</a>
+            <p id="error-box-msg" class="text-xs text-rose-700">You do not have permission to view students from another batch.</p>
+            <a href="/mentor/dashboard.html" class="inline-block mt-2 px-4 py-2 bg-rose-600 text-white text-xs font-semibold rounded-lg hover:bg-rose-700 transition">
+                Return to Your Batch Dashboard
+            </a>
         </div>
 
         <!-- Student Profile Content -->
         <div id="profile-content" class="space-y-6">
             
             <!-- Student Overview Card -->
-            <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div>
-                    <h1 id="st-detail-name" class="text-2xl font-black text-slate-900">Student Profile</h1>
-                    <p id="st-detail-dept-div" class="text-xs text-slate-500 mt-1">Department</p>
+            <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div class="space-y-2">
+                    <div class="flex items-center space-x-3">
+                        <h1 id="st-detail-name" class="text-2xl font-black text-slate-900">Student Profile</h1>
+                        <span id="st-detail-division" class="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded border border-indigo-200">Div A</span>
+                    </div>
+                    <p id="st-detail-dept-div" class="text-xs text-slate-500">Department</p>
                     
-                    <div class="flex items-center space-x-4 mt-3 text-xs font-mono">
-                        <span>URN: <strong id="st-detail-urn" class="text-slate-800">--</strong></span>
-                        <span>Roll: <strong id="st-detail-roll" class="text-slate-800">--</strong></span>
-                        <span>Batch: <strong id="st-detail-batch" class="text-indigo-600">--</strong></span>
+                    <div class="flex flex-wrap items-center gap-4 text-xs font-mono pt-1">
+                        <span>Roll: <strong id="st-detail-roll" class="text-slate-900 font-bold">--</strong></span>
+                        <span class="text-slate-300">|</span>
+                        <span>URN: <strong id="st-detail-urn" class="text-slate-900 font-bold">--</strong></span>
+                        <span class="text-slate-300">|</span>
+                        <span>Batch: <strong id="st-detail-batch" class="text-indigo-600 font-bold">--</strong></span>
+                        <span class="text-slate-300">|</span>
+                        <span>Phone: <strong id="st-detail-phone" class="text-slate-700 font-mono">--</strong></span>
+                        <span class="text-slate-300">|</span>
+                        <span>Email: <strong id="st-detail-email" class="text-slate-700 font-mono">--</strong></span>
                     </div>
                 </div>
 
-                <!-- Performance Assessment Card -->
-                <div class="bg-indigo-50/70 p-4 rounded-xl border border-indigo-100/80 w-full md:w-64 space-y-2">
+                <!-- ML Performance Assessment Card -->
+                <div class="bg-indigo-50/70 p-4 rounded-xl border border-indigo-100/80 w-full md:w-80 space-y-2">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-bold text-indigo-900 uppercase tracking-wider">Performance Level</span>
+                        <span class="text-[10px] font-bold text-indigo-900 uppercase tracking-wider">ML Performance Risk</span>
                         <span id="ml-risk-badge"><span class="badge-pending text-xs px-2 py-0.5 rounded">Pending</span></span>
                     </div>
-                    <div class="flex items-center justify-between pt-1">
-                        <span id="ml-confidence" class="text-xs text-slate-500 font-mono">Confidence: 94%</span>
+                    <div class="text-xs text-slate-600 flex items-center justify-between">
+                        <span>Support Priority:</span>
+                        <strong id="ml-priority" class="text-slate-800 font-semibold">Medium</strong>
+                    </div>
+                    <div class="pt-1 border-t border-indigo-100">
+                        <p class="text-[10px] text-slate-500 font-semibold uppercase">AI Recommendation:</p>
+                        <p id="ml-recommendation" class="text-xs text-slate-700 mt-0.5 italic">Analyzing mentee profile metrics...</p>
                     </div>
                 </div>
             </div>
 
             <!-- Academic Records Table -->
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200">
-                    <h3 class="font-bold text-slate-900 text-base">Academic Records</h3>
+                <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">Academic Records</h3>
+                        <p class="text-xs text-slate-500">Semester examination marks and overall attendance percentage</p>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -73,29 +93,82 @@
                                 <th class="px-6 py-3">Semester</th>
                                 <th class="px-6 py-3">CGPA</th>
                                 <th class="px-6 py-3">Attendance %</th>
-                                <th class="px-6 py-3">ISE / MSE / ESE Marks</th>
-                                <th class="px-6 py-3">Failed Subjects</th>
+                                <th class="px-6 py-3">ISE Marks (/40)</th>
+                                <th class="px-6 py-3">MSE Marks (/30)</th>
+                                <th class="px-6 py-3">ESE Marks (/30)</th>
+                                <th class="px-6 py-3">Failed Backlogs</th>
+                                <th class="px-6 py-3">Status</th>
                             </tr>
                         </thead>
                         <tbody id="st-academic-tbody">
                             <tr>
-                                <td colspan="5" class="px-6 py-6 text-center text-slate-400 text-xs">Loading academic records...</td>
+                                <td colspan="8" class="px-6 py-6 text-center text-slate-400 text-xs">Loading academic records...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Activities -->
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-3">
-                <h3 class="font-bold text-slate-900 text-base">Student Achievements & Activities</h3>
-                <div id="st-activities-list" class="space-y-2">
+            <!-- Meeting Attendance History Table -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">Meeting Attendance History</h3>
+                        <p class="text-xs text-slate-500">Batch mentoring meeting conduction log and student attendance</p>
+                    </div>
+                    <div id="st-att-summary-pill" class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700">
+                        Attendance: --
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] font-semibold border-b border-slate-200">
+                                <th class="px-6 py-3">Meeting No.</th>
+                                <th class="px-6 py-3">Date</th>
+                                <th class="px-6 py-3">Mode</th>
+                                <th class="px-6 py-3">Agenda</th>
+                                <th class="px-6 py-3">Attendance</th>
+                                <th class="px-6 py-3">Mentor Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="st-attendance-tbody">
+                            <tr>
+                                <td colspan="6" class="px-6 py-6 text-center text-slate-400 text-xs">Loading meeting attendance...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Student Activities & Achievements -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base">Student Achievements & Activities</h3>
+                    <p class="text-xs text-slate-500">Co-curricular and extra-curricular participations (NPTEL, Internships, Workshops, Sports)</p>
+                </div>
+                <div id="st-activities-list" class="space-y-3">
                     <p class="text-xs text-slate-400">Loading activities...</p>
+                </div>
+            </div>
+
+            <!-- Student Complaints & Grievances -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base">Student Complaints & Requests</h3>
+                    <p class="text-xs text-slate-500">Academic, infrastructure, or personal grievances submitted by this mentee</p>
+                </div>
+                <div id="st-complaints-list" class="space-y-3">
+                    <p class="text-xs text-slate-400">Loading complaints...</p>
                 </div>
             </div>
 
         </div>
     </main>
+
+    <footer class="bg-slate-900 border-t border-slate-800 text-slate-400 py-4 text-center text-xs">
+        <p>Mentor–Mentee Management System — Faculty Portal</p>
+    </footer>
 
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/auth.js"></script>

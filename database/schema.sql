@@ -6,6 +6,7 @@ CREATE DATABASE IF NOT EXISTS mentor_mentee;
 USE mentor_mentee;
 
 -- Drop tables if exists in reverse dependency order
+DROP TABLE IF EXISTS attendance;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS meetings;
 DROP TABLE IF EXISTS complaints;
@@ -145,4 +146,17 @@ CREATE TABLE notifications (
     is_read TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 11. Meeting Attendance Table
+CREATE TABLE attendance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    meeting_id INT NOT NULL,
+    student_id INT NOT NULL,
+    status ENUM('Present', 'Absent') NOT NULL DEFAULT 'Present',
+    remarks VARCHAR(255) DEFAULT NULL,
+    marked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (meeting_id) REFERENCES meetings(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    UNIQUE (meeting_id, student_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
