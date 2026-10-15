@@ -757,6 +757,25 @@
             }
         });
 
+        // Submit Complaint
+        document.getElementById('complaint-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                category: document.getElementById('cmp-category').value,
+                title: document.getElementById('cmp-title').value.trim(),
+                description: document.getElementById('cmp-desc').value.trim()
+            };
+            const res = await API.post('/student/complaints', body);
+            if (res.success) {
+                alert('Complaint submitted successfully! Your faculty mentor has been notified.');
+                closeComplaintModal();
+                document.getElementById('complaint-form').reset();
+                await loadStudentDashboardData();
+            } else {
+                alert(res.message || 'Error submitting complaint.');
+            }
+        });
+
         // Submit Academic Details (Current or Previous Semester)
         document.getElementById('academic-form').addEventListener('submit', async (e) => {
             e.preventDefault();

@@ -109,18 +109,20 @@ const getStudentDashboard = async (req, res) => {
       [student.batch_id]
     ) : [];
 
-    const upcomingMeeting = meetings.find(m => m.status === 'Scheduled') || meetings[0] || {
-      meeting_number: 2,
-      meeting_date: '2024-08-28 14:00:00',
-      mode: 'Offline / Lab 4',
-      agenda: 'Mid-Term Academic Review & Guidance'
-    };
+    // Find upcoming scheduled meeting
+    const upcomingMeeting = meetings.find(m => m.status === 'Scheduled') || (meetings.length > 0 ? meetings[0] : null);
 
+    // Dynamic Meetings Attended Count (Count completed meetings attended)
+    const completedMeetings = meetings.filter(m => m.status === 'Completed');
     const attendedRes = await db.query(
-      "SELECT COUNT(*) as count FROM meeting_attendees WHERE student_id = ? AND status = 'Present'",
+      `SELECT COUNT(*) as count 
+       FROM meeting_attendees ma 
+       JOIN meetings m ON ma.meeting_id = m.id 
+       WHERE ma.student_id = ? AND ma.status = 'Present' AND m.status = 'Completed'`,
       [student.id]
     );
     const meetingsAttendedCount = attendedRes[0]?.count || 0;
+    const totalCompletedCount = completedMeetings.length > 0 ? completedMeetings.length : meetings.length;
 
     // Activities
     const activities = await db.query(
@@ -142,8 +144,23 @@ const getStudentDashboard = async (req, res) => {
       [req.user.id]
     );
 
-    // Recent Mentor Advice
-    const mentorAdvice = "Focus on DBMS lab assignments and complete NPTEL credits before end-sem exams. Attendance threshold must be maintained above 75%.";
+    // Dynamic Mentor Advice tailored to student's academic standing, risk level, and batch meeting findings
+    const latestCompletedMeeting = completedMeetings[0];
+    let mentorAdvice = "";
+    if (student.ml_risk_level === 'Weak' || latestAcademic.defaulter_flag || (latestAcademic.attendance_percentage && latestAcademic.attendance_percentage < 75)) {
+      mentorAdvice = `${student.mentor_name || 'Faculty Mentor'}: "Attendance must be maintained strictly above 75%. Attend scheduled remedial doubt sessions and submit revised assignments before the upcoming review."`;
+    } else if (student.ml_risk_level === 'Bright' || (latestAcademic.cgpa && latestAcademic.cgpa >= 8.5)) {
+      mentorAdvice = `${student.mentor_name || 'Faculty Mentor'}: "Strong academic consistency. Pursue advanced NPTEL domain certifications, hackathon projects, and prepare your capstone/research synopsis."`;
+    } else {
+      mentorAdvice = `${student.mentor_name || 'Faculty Mentor'}: "Maintain consistent performance in lab practicals and continuous internal evaluation. Ensure timely submission of all coursework journals."`;
+    }
+    if (latestCompletedMeeting && latestCompletedMeeting.remarks) {
+      mentorAdvice += ` — Official Batch Note: ${latestCompletedMeeting.remarks}`;
+    }
+
+    const complaintsSummary = complaints.length === 0
+      ? '0 Active'
+      : (pendingComplaintsCount > 0 ? `${pendingComplaintsCount} In Progress` : `${complaints.length} Resolved`);
 
     return res.status(200).json({
       success: true,
@@ -151,10 +168,10 @@ const getStudentDashboard = async (req, res) => {
       summary: {
         attendance: latestAcademic.attendance_percentage || 82.45,
         avgMarks: (latestAcademic.cgpa * 10).toFixed(2) || 74.20,
-        academicProgress: latestAcademic.defaulter_flag ? 'Needs Improvement' : 'Good',
-        meetingsAttended: `${meetingsAttendedCount}/${meetings.length || 1}`,
+        academicProgress: latestAcademic.defaulter_flag ? 'Needs Guidance' : 'Good Progress',
+        meetingsAttended: `${meetingsAttendedCount}/${totalCompletedCount || 1}`,
         pendingActivities: pendingActivitiesCount,
-        complaints: `${pendingComplaintsCount} ${pendingComplaintsCount > 0 ? 'In Progress' : 'Resolved'}`
+        complaints: complaintsSummary
       },
       subjectMarks,
       upcomingMeeting,
