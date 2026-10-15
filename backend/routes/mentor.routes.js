@@ -14,6 +14,7 @@ router.get('/students', mentorController.getAssignedStudents);
 router.get('/students/:id', mentorController.getStudentDetail);
 router.post('/students/:id/academic', mentorController.updateStudentAcademicRecord);
 router.post('/students/:id/subject-attendance', mentorController.updateStudentSubjectAttendance);
+router.post('/students/:id/total-attendance', mentorController.updateStudentTotalAttendance);
 router.get('/students/:id/report', mentorController.getMentorStudentReport);
 
 // Common Meeting Agenda & Attendance

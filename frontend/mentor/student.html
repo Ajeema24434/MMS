@@ -161,7 +161,7 @@
                         <thead>
                             <tr class="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold border-b border-slate-200">
                                 <th class="px-5 py-3.5">Subject Name</th>
-                                <th class="px-5 py-3.5">Subject Attendance Analysis</th>
+                                <th class="px-5 py-3.5">Subject Attendance</th>
                                 <th class="px-5 py-3.5">ISE Marks (30)</th>
                                 <th class="px-5 py-3.5">MSE Marks (30)</th>
                                 <th class="px-5 py-3.5">ESE Exam (70)</th>
@@ -179,22 +179,42 @@
                 </div>
             </div>
 
-            <!-- 3. Add / Update Current Semester Subject-Wise Attendance -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-4" id="subject-attendance-update-section">
+            <!-- 3. Add / Update Current Semester Attendance Percentage (Subject-Wise & Total) -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-6" id="subject-attendance-update-section">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                     <div>
                         <h3 class="font-bold text-slate-900 text-base flex items-center space-x-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-                            <span>Add / Update Current Semester Subject Attendance</span>
+                            <span>Add / Update Current Semester Attendance Percentage</span>
                         </h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Enter or revise conducted sessions and attended sessions for each subject individually in current semester</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Enter attendance percentage subject-wise for each course, or update overall total semester attendance</p>
                     </div>
-                    <span id="subj-att-cur-sem-badge" class="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 uppercase tracking-wide">Current Semester Subjects</span>
+                    <span id="subj-att-cur-sem-badge" class="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 uppercase tracking-wide">Semester 5 Subjects</span>
                 </div>
 
-                <!-- Subject-Wise Entry Grid -->
-                <div id="subject-attendance-entry-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Populated dynamically via JS -->
+                <!-- Total Attendance Percentage Card -->
+                <div class="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="space-y-0.5">
+                        <span class="text-indigo-900 font-bold uppercase text-[10px] tracking-wider">Total Semester Attendance Percentage</span>
+                        <p class="text-xs text-slate-600">Overall cumulative semester attendance across all courses</p>
+                    </div>
+                    <form id="total-attendance-form" class="flex items-center space-x-2 w-full sm:w-auto">
+                        <div class="relative w-36">
+                            <input type="number" id="total-att-input" step="0.1" min="0" max="100" required placeholder="85.0" class="w-full px-3 py-2 pr-8 border border-indigo-200 rounded-lg text-sm font-mono font-bold text-indigo-950 outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">%</span>
+                        </div>
+                        <button type="submit" id="total-att-save-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg shadow-sm transition whitespace-nowrap cursor-pointer">
+                            Update Total Attendance
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Subject-Wise Attendance Percentage Grid -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-extrabold uppercase text-slate-700 tracking-wider">Subject-Wise Attendance Percentage</h4>
+                    <div id="subject-attendance-entry-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Populated dynamically via JS -->
+                    </div>
                 </div>
             </div>
 
@@ -263,7 +283,7 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
                     <h3 class="font-bold text-slate-900 text-base" id="sam-title">Update Subject Attendance</h3>
-                    <p class="text-xs text-slate-500" id="sam-subtitle">Manage subject sessions & percentage</p>
+                    <p class="text-xs text-slate-500" id="sam-subtitle">Manage subject attendance percentage</p>
                 </div>
                 <button type="button" onclick="closeSubjectAttendanceModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold leading-none p-1">&times;</button>
             </div>
@@ -279,34 +299,31 @@
                     <div id="sam-code-display" class="text-slate-500 font-mono text-xs">CODE</div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Conducted Sessions *</label>
-                        <input type="number" id="sam-conducted" min="1" max="100" required class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm font-semibold">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Attended Sessions *</label>
-                        <input type="number" id="sam-attended" min="0" max="100" required class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm font-semibold">
+                <div>
+                    <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Subject Attendance Percentage (0.0% – 100.0%) *</label>
+                    <div class="relative">
+                        <input type="number" id="sam-percentage" step="0.1" min="0" max="100" required placeholder="e.g. 88.5" class="w-full px-3 py-2 pr-8 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm font-bold text-indigo-950">
+                        <span class="absolute right-3 top-2.5 font-bold text-slate-400 text-xs">%</span>
                     </div>
                 </div>
 
-                <!-- Live Calculated Preview -->
+                <!-- Live Status Preview -->
                 <div class="p-3 bg-indigo-50/60 rounded-xl border border-indigo-100 flex items-center justify-between">
                     <div>
-                        <span class="text-[10px] uppercase font-bold text-indigo-900 block">Attendance Percentage</span>
-                        <div id="sam-pct-preview" class="text-lg font-black text-indigo-700 font-mono">0.0%</div>
+                        <span class="text-[10px] uppercase font-bold text-indigo-900 block">Attendance Standing</span>
+                        <div id="sam-pct-preview" class="text-base font-black text-indigo-700 font-mono">0.0%</div>
                     </div>
                     <span id="sam-status-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Normal</span>
                 </div>
 
                 <div>
                     <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Attendance Remarks / Counseling Note</label>
-                    <input type="text" id="sam-remarks" placeholder="e.g. Regular in theory, missed 2 practical sessions" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="sam-remarks" placeholder="e.g. Regular attendance, attentive in coursework" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
 
                 <div class="pt-2 flex space-x-3 border-t border-slate-100">
                     <button type="button" onclick="closeSubjectAttendanceModal()" class="w-1/2 py-2.5 bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg hover:bg-slate-200 transition">Cancel</button>
-                    <button type="submit" id="sam-save-btn" class="w-1/2 py-2.5 bg-indigo-600 text-white font-semibold text-xs rounded-lg hover:bg-indigo-500 shadow transition">Save Subject Attendance</button>
+                    <button type="submit" id="sam-save-btn" class="w-1/2 py-2.5 bg-indigo-600 text-white font-semibold text-xs rounded-lg hover:bg-indigo-500 shadow transition">Save Subject Attendance %</button>
                 </div>
             </form>
         </div>

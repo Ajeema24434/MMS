@@ -211,7 +211,9 @@ const getStudentDetail = async (req, res) => {
       const subjects = getSemesterSubjectEvaluation(student, ar, ar.semester, subjectAttendances);
       const totalAtt = subjects.reduce((sum, s) => sum + s.attended, 0);
       const totalCond = subjects.reduce((sum, s) => sum + s.conducted, 0);
-      const computedAttPct = totalCond > 0 ? parseFloat(((totalAtt / totalCond) * 100).toFixed(1)) : (ar.attendance_percentage || 85.0);
+      const computedAttPct = (ar.attendance_percentage !== null && ar.attendance_percentage !== undefined)
+        ? parseFloat(ar.attendance_percentage)
+        : (totalCond > 0 ? parseFloat(((totalAtt / totalCond) * 100).toFixed(1)) : 85.0);
 
       semesterAnalysis[ar.semester] = {
         semester: ar.semester,
@@ -228,7 +230,9 @@ const getStudentDetail = async (req, res) => {
       const subjects = getSemesterSubjectEvaluation(student, fallbackRecord, currentSem, subjectAttendances);
       const totalAtt = subjects.reduce((sum, s) => sum + s.attended, 0);
       const totalCond = subjects.reduce((sum, s) => sum + s.conducted, 0);
-      const computedAttPct = totalCond > 0 ? parseFloat(((totalAtt / totalCond) * 100).toFixed(1)) : 85.0;
+      const computedAttPct = (fallbackRecord.attendance_percentage !== null && fallbackRecord.attendance_percentage !== undefined)
+        ? parseFloat(fallbackRecord.attendance_percentage)
+        : (totalCond > 0 ? parseFloat(((totalAtt / totalCond) * 100).toFixed(1)) : 85.0);
 
       semesterAnalysis[currentSem] = {
         semester: currentSem,
@@ -362,7 +366,7 @@ const updateStudentAcademicRecord = async (req, res) => {
   }
 };
 
-// POST /api/mentor/students/:id/subject-attendance (Add/Update attendance subject-wise)
+// POST /api/mentor/students/:id/subject-attendance (Add/Update attendance percentage subject-wise)
 const updateStudentSubjectAttendance = async (req, res) => {
   try {
     const { id } = req.params;
@@ -380,24 +384,30 @@ const updateStudentSubjectAttendance = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Forbidden: Student not in your assigned batch.' });
     }
 
-    const { semester, subject_code, subject_name, conducted_sessions, attended_sessions, remarks } = req.body;
+    const { semester, subject_code, subject_name, attendance_percentage, conducted_sessions, attended_sessions, remarks } = req.body;
     const sem = parseInt(semester) || student.semester || 5;
 
     if (!subject_code) {
       return res.status(400).json({ success: false, message: 'Subject code is required.' });
     }
 
-    const conducted = parseInt(conducted_sessions);
-    if (isNaN(conducted) || conducted <= 0) {
-      return res.status(400).json({ success: false, message: 'Total conducted sessions must be greater than 0.' });
+    let pct = parseFloat(attendance_percentage);
+    if (isNaN(pct)) {
+      const cond = parseInt(conducted_sessions);
+      const att = parseInt(attended_sessions);
+      if (!isNaN(cond) && cond > 0 && !isNaN(att)) {
+        pct = parseFloat(((att / cond) * 100).toFixed(1));
+      } else {
+        return res.status(400).json({ success: false, message: 'Valid attendance percentage (0.0 - 100.0) is required.' });
+      }
     }
 
-    const attended = parseInt(attended_sessions);
-    if (isNaN(attended) || attended < 0 || attended > conducted) {
-      return res.status(400).json({ success: false, message: 'Attended sessions must be between 0 and conducted sessions.' });
+    if (pct < 0 || pct > 100) {
+      return res.status(400).json({ success: false, message: 'Attendance percentage must be between 0.0 and 100.0.' });
     }
 
-    const pct = parseFloat(((attended / conducted) * 100).toFixed(1));
+    const conducted = 36;
+    const attended = Math.round((pct / 100) * 36);
     const subjName = subject_name || subject_code;
 
     // Check if record exists
@@ -419,47 +429,22 @@ const updateStudentSubjectAttendance = async (req, res) => {
       `, [student.id, sem, subject_code, subjName, conducted, attended, pct, remarks || '']);
     }
 
-    // Recalculate semester aggregate in academic_records if present
-    const allSemSubj = await db.query(
-      'SELECT conducted_sessions, attended_sessions FROM student_subject_attendance WHERE student_id = ? AND semester = ?',
-      [student.id, sem]
-    );
-    if (allSemSubj.length > 0) {
-      const totAtt = allSemSubj.reduce((acc, curr) => acc + curr.attended_sessions, 0);
-      const totCond = allSemSubj.reduce((acc, curr) => acc + curr.conducted_sessions, 0);
-      const overallPct = totCond > 0 ? parseFloat(((totAtt / totCond) * 100).toFixed(1)) : pct;
-      const isDef = overallPct < 75.0 ? 1 : 0;
-
-      const acadExist = await db.query(
-        'SELECT id FROM academic_records WHERE student_id = ? AND semester = ? LIMIT 1',
-        [student.id, sem]
-      );
-      if (acadExist.length > 0) {
-        await db.query(
-          'UPDATE academic_records SET attendance_percentage = ?, defaulter_flag = ? WHERE id = ?',
-          [overallPct, isDef, acadExist[0].id]
-        );
-      }
-    }
-
     // Notify mentee
     const stUser = await db.query('SELECT user_id FROM students WHERE id = ? LIMIT 1', [student.id]);
     if (stUser.length > 0) {
       await db.query(
         'INSERT INTO notifications (user_id, message) VALUES (?, ?)',
-        [stUser[0].user_id, `Faculty Mentor ${mentor.name} updated your attendance for ${subjName}: ${attended}/${conducted} sessions (${pct}%).`]
+        [stUser[0].user_id, `Faculty Mentor ${mentor.name} updated your attendance for ${subjName} to ${pct}%.`]
       );
     }
 
     logger.info(`Mentor ${mentor.name} updated subject attendance for ${student.urn} - ${subjName} (${pct}%)`);
     return res.status(200).json({
       success: true,
-      message: `Subject attendance for ${subjName} updated to ${attended}/${conducted} (${pct}%).`,
+      message: `Subject attendance for ${subjName} updated to ${pct}%.`,
       attendance: {
         subject_code,
         subject_name: subjName,
-        conducted_sessions: conducted,
-        attended_sessions: attended,
         attendance_percentage: pct,
         isDefaulter: pct < 75.0
       }
@@ -467,6 +452,86 @@ const updateStudentSubjectAttendance = async (req, res) => {
   } catch (err) {
     logger.error('Error updating subject attendance:', err);
     return res.status(500).json({ success: false, message: 'Server error updating subject attendance.' });
+  }
+};
+
+// POST /api/mentor/students/:id/total-attendance (Mentor updates total/overall semester attendance percentage)
+const updateStudentTotalAttendance = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const mentor = await getMentorByUserId(req.user.id);
+    if (!mentor) return res.status(404).json({ success: false, message: 'Mentor not found.' });
+
+    const assignedBatches = await getMentorBatches(mentor.id);
+    const mentorBatchIds = assignedBatches.map(b => b.id);
+
+    const students = await db.query('SELECT * FROM students WHERE id = ? LIMIT 1', [id]);
+    if (students.length === 0) return res.status(404).json({ success: false, message: 'Student not found.' });
+    const student = students[0];
+
+    if (!mentorBatchIds.includes(student.batch_id)) {
+      return res.status(403).json({ success: false, message: 'Forbidden: Student not in your assigned batch.' });
+    }
+
+    const { semester, attendance_percentage } = req.body;
+    const sem = parseInt(semester) || student.semester || 5;
+
+    const pct = parseFloat(attendance_percentage);
+    if (isNaN(pct) || pct < 0 || pct > 100) {
+      return res.status(400).json({ success: false, message: 'Valid attendance percentage (0.0 - 100.0) is required.' });
+    }
+
+    const isDef = pct < 75.0 ? 1 : 0;
+
+    const existing = await db.query(
+      'SELECT id FROM academic_records WHERE student_id = ? AND semester = ? LIMIT 1',
+      [student.id, sem]
+    );
+
+    if (existing.length > 0) {
+      await db.query(
+        'UPDATE academic_records SET attendance_percentage = ?, defaulter_flag = ? WHERE id = ?',
+        [pct, isDef, existing[0].id]
+      );
+    } else {
+      await db.query(
+        'INSERT INTO academic_records (student_id, semester, cgpa, attendance_percentage, defaulter_flag) VALUES (?, ?, 8.0, ?, ?)',
+        [student.id, sem, pct, isDef]
+      );
+    }
+
+    // Dynamic risk level update if current semester
+    if (sem >= (student.semester || 1)) {
+      let newRisk = student.ml_risk_level;
+      if (pct < 75.0) {
+        newRisk = 'Weak';
+      } else if (pct >= 90.0) {
+        newRisk = 'Bright';
+      } else {
+        newRisk = 'Average';
+      }
+      await db.query('UPDATE students SET ml_risk_level = ? WHERE id = ?', [newRisk, student.id]);
+    }
+
+    // Notify mentee
+    const stUser = await db.query('SELECT user_id FROM students WHERE id = ? LIMIT 1', [student.id]);
+    if (stUser.length > 0) {
+      await db.query(
+        'INSERT INTO notifications (user_id, message) VALUES (?, ?)',
+        [stUser[0].user_id, `Faculty Mentor ${mentor.name} updated your overall attendance for Semester ${sem} to ${pct}%.`]
+      );
+    }
+
+    logger.info(`Mentor ${mentor.name} updated total attendance for Student ${student.urn} (Semester ${sem}) to ${pct}%`);
+    return res.status(200).json({
+      success: true,
+      message: `Total semester attendance updated to ${pct}%.`,
+      attendance_percentage: pct,
+      isDefaulter: isDef === 1
+    });
+  } catch (err) {
+    logger.error('Error updating total attendance:', err);
+    return res.status(500).json({ success: false, message: 'Server error updating total attendance.' });
   }
 };
 
@@ -1117,6 +1182,7 @@ module.exports = {
   getStudentDetail,
   updateStudentAcademicRecord,
   updateStudentSubjectAttendance,
+  updateStudentTotalAttendance,
   getMentorStudentReport,
   createMeeting,
   getMeetings,

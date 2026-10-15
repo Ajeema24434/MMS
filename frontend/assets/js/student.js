@@ -323,9 +323,7 @@ function populateAcademicView(records, subjectMarks) {
       tbody.innerHTML = subjectMarks.map((s, idx) => {
         const name = s.name || s.subject || ('Subject ' + (idx + 1));
         const code = s.code || `AIDS50${idx + 1}`;
-        const conducted = s.conducted ?? s.attendance?.conducted ?? 36;
-        const attended = s.attended ?? s.attendance?.attended ?? Math.round(conducted * 0.85);
-        const attendance_pct = s.attendance_pct ?? s.attendance?.percentage ?? parseFloat(((attended / conducted) * 100).toFixed(1));
+        const attendance_pct = s.attendance_pct ?? s.attendance?.percentage ?? 85.0;
         const defaulter = s.defaulter ?? s.attendance?.isDefaulter ?? (attendance_pct < 75.0);
         const ise = s.ise !== undefined ? s.ise : (s.internal !== undefined ? s.internal : 22);
         const mse = s.mse !== undefined ? s.mse : 25;
@@ -342,8 +340,8 @@ function populateAcademicView(records, subjectMarks) {
             </td>
             <td class="px-5 py-3.5">
               <div class="space-y-1 min-w-[170px]">
-                <div class="flex items-center justify-between text-[11px] font-mono">
-                  <span class="${defaulter ? 'text-rose-600 font-bold' : 'text-slate-700'}">${attended}/${conducted} sessions (${attendance_pct}%)</span>
+                <div class="flex items-center justify-between text-xs font-mono">
+                  <span class="${defaulter ? 'text-rose-600 font-bold' : 'text-slate-800 font-bold'}">${attendance_pct}%</span>
                   ${defaulter ? '<span class="px-1.5 py-0.2 rounded bg-rose-100 text-rose-700 text-[9px] font-bold">Defaulter &lt;75%</span>' : '<span class="text-emerald-600 font-semibold text-[9px]">Normal</span>'}
                 </div>
                 <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">

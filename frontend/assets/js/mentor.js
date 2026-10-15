@@ -681,9 +681,9 @@ function renderSubjectBreakdownForSem(sem) {
             <span class="font-mono text-[10px] text-slate-400 font-normal">${s.code}</span>
           </td>
           <td class="px-5 py-3.5">
-            <div class="space-y-1 min-w-[170px]">
-              <div class="flex items-center justify-between text-[11px] font-mono">
-                <span class="${s.defaulter ? 'text-rose-600 font-bold' : 'text-slate-700'}">${s.attended}/${s.conducted} sessions (${s.attendance_pct}%)</span>
+            <div class="space-y-1 min-w-[150px]">
+              <div class="flex items-center justify-between text-xs font-mono font-bold">
+                <span class="${s.defaulter ? 'text-rose-600' : 'text-slate-800'}">${s.attendance_pct}%</span>
                 ${s.defaulter 
                   ? '<span class="px-1.5 py-0.2 rounded bg-rose-100 text-rose-700 text-[9px] font-bold">Defaulter &lt;75%</span>' 
                   : '<span class="text-emerald-600 font-semibold text-[9px]">Normal</span>'}
@@ -703,7 +703,7 @@ function renderSubjectBreakdownForSem(sem) {
             </span>
           </td>
           <td class="px-5 py-3.5 text-right">
-            <button type="button" onclick="openSubjectAttendanceModal('${s.code}', '${s.name.replace(/'/g, "\\'")}', ${s.conducted}, ${s.attended}, ${sem}, '${(s.remarks || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition cursor-pointer">
+            <button type="button" onclick="openSubjectAttendanceModal('${s.code}', '${s.name.replace(/'/g, "\\'")}', ${s.attendance_pct}, ${sem}, '${(s.remarks || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition cursor-pointer">
               Edit Attendance
             </button>
           </td>
@@ -716,14 +716,17 @@ function renderSubjectBreakdownForSem(sem) {
   renderMentorCharts(subjects, currentStudentAcademicRecords, sem);
 
   // Render Subject-Wise Attendance Entry Cards
-  renderSubjectAttendanceEntryCards(subjects, sem);
+  renderSubjectAttendanceEntryCards(subjects, sem, analysis.attendance_percentage);
 }
 
 // Render Subject Attendance Entry Form Cards directly below analysis
-function renderSubjectAttendanceEntryCards(subjects, sem) {
+function renderSubjectAttendanceEntryCards(subjects, sem, overallAttendancePct = 85.0) {
   const container = document.getElementById('subject-attendance-entry-cards');
   const badge = document.getElementById('subj-att-cur-sem-badge');
+  const totalInput = document.getElementById('total-att-input');
+  
   if (badge) badge.textContent = `Semester ${sem} Subjects`;
+  if (totalInput) totalInput.value = overallAttendancePct !== undefined ? overallAttendancePct : 85.0;
   if (!container) return;
 
   if (!subjects || subjects.length === 0) {
@@ -745,26 +748,23 @@ function renderSubjectAttendanceEntryCards(subjects, sem) {
           </span>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 text-xs">
-          <div>
-            <label class="block text-[10px] uppercase font-semibold text-slate-500 mb-1">Total Conducted</label>
-            <input type="number" id="subj-card-cond-${s.code}" value="${s.conducted}" min="1" max="100" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg font-mono text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-semibold" oninput="updateCardAttendanceLive('${s.code}')">
-          </div>
-          <div>
-            <label class="block text-[10px] uppercase font-semibold text-slate-500 mb-1">Attended Sessions</label>
-            <input type="number" id="subj-card-att-${s.code}" value="${s.attended}" min="0" max="100" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg font-mono text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-semibold" oninput="updateCardAttendanceLive('${s.code}')">
+        <div>
+          <label class="block text-[10px] uppercase font-semibold text-slate-500 mb-1">Attendance Percentage (%)</label>
+          <div class="relative">
+            <input type="number" id="subj-card-pct-${s.code}" value="${s.attendance_pct}" step="0.1" min="0" max="100" class="w-full px-3 py-2 pr-8 border border-slate-300 rounded-lg font-mono text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 bg-white" oninput="updateCardAttendanceLive('${s.code}')">
+            <span class="absolute right-3 top-2.5 font-bold text-slate-400 text-xs">%</span>
           </div>
         </div>
 
         <div>
           <label class="block text-[10px] uppercase font-semibold text-slate-500 mb-1">Observation / Counseling Remarks</label>
-          <input type="text" id="subj-card-rem-${s.code}" value="${(s.remarks || '').replace(/"/g, '&quot;')}" placeholder="e.g. Regular in theory, active in lab" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+          <input type="text" id="subj-card-rem-${s.code}" value="${(s.remarks || '').replace(/"/g, '&quot;')}" placeholder="e.g. Regular in coursework" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
 
         <div class="pt-1">
           <button type="button" id="subj-card-btn-${s.code}" onclick="saveSingleSubjectAttendance(${sem}, '${s.code}', '${s.name.replace(/'/g, "\\'")}')" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center justify-center space-x-1.5 cursor-pointer">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            <span>Save ${s.code} Attendance</span>
+            <span>Save ${s.code} Attendance %</span>
           </button>
         </div>
       </div>
@@ -774,37 +774,29 @@ function renderSubjectAttendanceEntryCards(subjects, sem) {
 
 // Live calculation in entry cards
 function updateCardAttendanceLive(code) {
-  const condEl = document.getElementById(`subj-card-cond-${code}`);
-  const attEl = document.getElementById(`subj-card-att-${code}`);
+  const pctEl = document.getElementById(`subj-card-pct-${code}`);
   const badge = document.getElementById(`subj-card-badge-${code}`);
-  if (!condEl || !attEl || !badge) return;
+  if (!pctEl || !badge) return;
 
-  const cond = parseInt(condEl.value) || 0;
-  const att = parseInt(attEl.value) || 0;
-  const pct = cond > 0 ? parseFloat(((att / cond) * 100).toFixed(1)) : 0;
+  const pct = parseFloat(pctEl.value);
+  if (isNaN(pct)) return;
   const isDef = pct < 75.0;
 
   badge.textContent = `${pct}% ${isDef ? '(Defaulter)' : ''}`;
   badge.className = `px-2 py-0.5 rounded text-[10px] font-bold flex-shrink-0 ${pct >= 85 ? 'bg-emerald-100 text-emerald-800' : (pct >= 75 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800')}`;
 }
 
-// Save single subject attendance from entry card
+// Save single subject attendance percentage from entry card
 async function saveSingleSubjectAttendance(sem, code, name) {
-  const condEl = document.getElementById(`subj-card-cond-${code}`);
-  const attEl = document.getElementById(`subj-card-att-${code}`);
+  const pctEl = document.getElementById(`subj-card-pct-${code}`);
   const remEl = document.getElementById(`subj-card-rem-${code}`);
   const btn = document.getElementById(`subj-card-btn-${code}`);
 
-  const conducted = parseInt(condEl.value);
-  const attended = parseInt(attEl.value);
+  const pct = parseFloat(pctEl.value);
   const remarks = remEl ? remEl.value.trim() : '';
 
-  if (isNaN(conducted) || conducted <= 0) {
-    alert('Total conducted sessions must be at least 1.');
-    return;
-  }
-  if (isNaN(attended) || attended < 0 || attended > conducted) {
-    alert('Attended sessions must be between 0 and total conducted sessions.');
+  if (isNaN(pct) || pct < 0 || pct > 100) {
+    alert('Please enter a valid attendance percentage between 0.0 and 100.0');
     return;
   }
 
@@ -818,13 +810,12 @@ async function saveSingleSubjectAttendance(sem, code, name) {
       semester: sem,
       subject_code: code,
       subject_name: name,
-      conducted_sessions: conducted,
-      attended_sessions: attended,
+      attendance_percentage: pct,
       remarks: remarks
     });
 
     if (res.success) {
-      alert(`Attendance for ${name} (${code}) successfully saved: ${attended}/${conducted} sessions (${res.attendance?.attendance_percentage || ''}%).`);
+      alert(`Attendance for ${name} (${code}) successfully saved: ${pct}%.`);
       await loadMentorStudentPage();
     } else {
       alert(res.message || 'Error saving subject attendance.');
@@ -836,14 +827,14 @@ async function saveSingleSubjectAttendance(sem, code, name) {
       btn.disabled = false;
       btn.innerHTML = `
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        <span>Save ${code} Attendance</span>
+        <span>Save ${code} Attendance %</span>
       `;
     }
   }
 }
 
-// Subject Attendance Modal
-function openSubjectAttendanceModal(code, name, conducted, attended, sem, remarks = '') {
+// Subject Attendance Modal (Percentage Only)
+function openSubjectAttendanceModal(code, name, attendance_pct, sem, remarks = '') {
   const modal = document.getElementById('subject-attendance-modal');
   if (!modal) return;
 
@@ -852,8 +843,7 @@ function openSubjectAttendanceModal(code, name, conducted, attended, sem, remark
   const semEl = document.getElementById('sam-sem');
   const subjDisp = document.getElementById('sam-subj-display');
   const codeDisp = document.getElementById('sam-code-display');
-  const condEl = document.getElementById('sam-conducted');
-  const attEl = document.getElementById('sam-attended');
+  const pctEl = document.getElementById('sam-percentage');
   const remEl = document.getElementById('sam-remarks');
 
   if (codeEl) codeEl.value = code;
@@ -861,8 +851,7 @@ function openSubjectAttendanceModal(code, name, conducted, attended, sem, remark
   if (semEl) semEl.value = sem || currentSelectedSemester;
   if (subjDisp) subjDisp.textContent = name;
   if (codeDisp) codeDisp.textContent = `${code} • Semester ${sem || currentSelectedSemester}`;
-  if (condEl) condEl.value = conducted || 36;
-  if (attEl) attEl.value = attended !== undefined ? attended : 30;
+  if (pctEl) pctEl.value = attendance_pct !== undefined ? attendance_pct : 85.0;
   if (remEl) remEl.value = remarks || '';
 
   updateModalAttendanceLive();
@@ -876,16 +865,17 @@ function closeSubjectAttendanceModal() {
 }
 
 function updateModalAttendanceLive() {
-  const condEl = document.getElementById('sam-conducted');
-  const attEl = document.getElementById('sam-attended');
+  const pctEl = document.getElementById('sam-percentage');
   const preview = document.getElementById('sam-pct-preview');
   const badge = document.getElementById('sam-status-badge');
-  if (!condEl || !attEl || !preview || !badge) return;
+  if (!pctEl || !preview || !badge) return;
 
-  const cond = parseInt(condEl.value) || 0;
-  const att = parseInt(attEl.value) || 0;
-  const pct = cond > 0 ? parseFloat(((att / cond) * 100).toFixed(1)) : 0;
-  preview.textContent = `${pct}% (${att}/${cond} sessions)`;
+  const pct = parseFloat(pctEl.value);
+  if (isNaN(pct)) {
+    preview.textContent = '--%';
+    return;
+  }
+  preview.textContent = `${pct}%`;
 
   if (pct >= 85) {
     badge.textContent = 'Eligible (High)';
@@ -1060,32 +1050,25 @@ async function loadMentorStudentPage() {
     }
   }
 
-  // 2. Ensure subject-attendance-modal-form listener is attached
+  // 2. Ensure subject-attendance-modal-form listener is attached (Percentage only)
   const samForm = document.getElementById('subject-attendance-modal-form');
   if (samForm && !samForm.dataset.listenerAttached) {
     samForm.dataset.listenerAttached = 'true';
     
-    // Live calculation listeners for modal
-    const samCond = document.getElementById('sam-conducted');
-    const samAtt = document.getElementById('sam-attended');
-    if (samCond) samCond.addEventListener('input', updateModalAttendanceLive);
-    if (samAtt) samAtt.addEventListener('input', updateModalAttendanceLive);
+    // Live percentage calculation listener for modal
+    const samPct = document.getElementById('sam-percentage');
+    if (samPct) samPct.addEventListener('input', updateModalAttendanceLive);
 
     samForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const code = document.getElementById('sam-code').value;
       const name = document.getElementById('sam-name').value;
       const sem = document.getElementById('sam-sem').value;
-      const conducted = parseInt(document.getElementById('sam-conducted').value);
-      const attended = parseInt(document.getElementById('sam-attended').value);
+      const pct = parseFloat(document.getElementById('sam-percentage').value);
       const remarks = document.getElementById('sam-remarks').value.trim();
 
-      if (isNaN(conducted) || conducted <= 0) {
-        alert('Conducted sessions must be at least 1.');
-        return;
-      }
-      if (isNaN(attended) || attended < 0 || attended > conducted) {
-        alert('Attended sessions must be between 0 and conducted sessions.');
+      if (isNaN(pct) || pct < 0 || pct > 100) {
+        alert('Please enter a valid attendance percentage between 0.0 and 100.0');
         return;
       }
 
@@ -1099,22 +1082,55 @@ async function loadMentorStudentPage() {
         semester: sem,
         subject_code: code,
         subject_name: name,
-        conducted_sessions: conducted,
-        attended_sessions: attended,
+        attendance_percentage: pct,
         remarks: remarks
       });
 
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Save Subject Attendance';
+        submitBtn.textContent = 'Save Subject Attendance %';
       }
 
       if (res.success) {
         closeSubjectAttendanceModal();
-        alert(`Subject attendance for ${name} (${code}) successfully saved!`);
+        alert(`Subject attendance for ${name} (${code}) successfully saved: ${pct}%!`);
         await loadMentorStudentPage();
       } else {
         alert(res.message || 'Error updating subject attendance.');
+      }
+    });
+  }
+
+  // 3. Ensure total-attendance-form listener is attached (Total Attendance Percentage)
+  const totalAttForm = document.getElementById('total-attendance-form');
+  if (totalAttForm && !totalAttForm.dataset.listenerAttached) {
+    totalAttForm.dataset.listenerAttached = 'true';
+    totalAttForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pctInput = document.getElementById('total-att-input');
+      const pct = parseFloat(pctInput ? pctInput.value : '');
+      if (isNaN(pct) || pct < 0 || pct > 100) {
+        alert('Please enter a valid total attendance percentage between 0.0 and 100.0');
+        return;
+      }
+      const saveBtn = document.getElementById('total-att-save-btn');
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Updating...';
+      }
+      const res = await API.post(`/mentor/students/${studentId}/total-attendance`, {
+        semester: currentSelectedSemester || activeSem,
+        attendance_percentage: pct
+      });
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Update Total Attendance';
+      }
+      if (res.success) {
+        alert(`Total attendance for Semester ${currentSelectedSemester || activeSem} successfully updated to ${pct}%!`);
+        await loadMentorStudentPage();
+      } else {
+        alert(res.message || 'Error updating total attendance.');
       }
     });
   }

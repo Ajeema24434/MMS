@@ -73,12 +73,14 @@ const getStudentDashboard = async (req, res) => {
     // Unified Dynamic Subject breakdown and attendance analysis matching mentor mentee profile
     const subjectMarks = getSemesterSubjectEvaluation(student, latestAcademic, currentSem, subjectAttendances);
 
-    // Synchronize overall attendance percentage from subjects
-    if (subjectMarks && subjectMarks.length > 0) {
-      const totAtt = subjectMarks.reduce((acc, s) => acc + s.attended, 0);
-      const totCond = subjectMarks.reduce((acc, s) => acc + s.conducted, 0);
-      if (totCond > 0) {
-        latestAcademic.attendance_percentage = parseFloat(((totAtt / totCond) * 100).toFixed(1));
+    // Preserve recorded overall attendance percentage; fallback to subjects average if not recorded
+    if (latestAcademic.attendance_percentage === null || latestAcademic.attendance_percentage === undefined) {
+      if (subjectMarks && subjectMarks.length > 0) {
+        const totAtt = subjectMarks.reduce((acc, s) => acc + s.attended, 0);
+        const totCond = subjectMarks.reduce((acc, s) => acc + s.conducted, 0);
+        if (totCond > 0) {
+          latestAcademic.attendance_percentage = parseFloat(((totAtt / totCond) * 100).toFixed(1));
+        }
       }
     }
 
