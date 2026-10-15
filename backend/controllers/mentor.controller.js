@@ -164,76 +164,7 @@ const getAssignedStudents = async (req, res) => {
   }
 };
 
-// Dynamic Subject Mark & Attendance Generator for all Semesters (1 to 8)
-const getSemesterSubjectEvaluation = (student, academicRecord, targetSemester) => {
-  const sem = parseInt(targetSemester) || 1;
-  const subjectsBySemester = {
-    1: ['Engineering Mathematics-I', 'Engineering Physics', 'Basic Electrical Engineering', 'Programming & Problem Solving', 'Engineering Graphics'],
-    2: ['Engineering Mathematics-II', 'Engineering Chemistry', 'Basic Electronics Engineering', 'Engineering Mechanics', 'Workshop Practice'],
-    3: ['Discrete Mathematics', 'Data Structures & Algorithms', 'Object Oriented Programming', 'Digital Logic & Computer Design', 'Humanities & Social Sciences'],
-    4: ['Applied Statistics & Probability', 'Database Management Systems', 'Operating Systems', 'Computer Networks', 'Software Engineering'],
-    5: ['Machine Learning', 'Design & Analysis of Algorithms', 'Artificial Intelligence', 'Theory of Computation', 'Web Application Development'],
-    6: ['Deep Learning', 'Data Mining & Data Warehousing', 'Natural Language Processing', 'Information & Cyber Security', 'Cloud Computing'],
-    7: ['Big Data Analytics', 'Distributed Systems', 'Reinforcement Learning', 'Internet of Things & Edge AI', 'Open Elective - Project Management'],
-    8: ['High Performance Computing', 'MLOps & AI Systems Engineering', 'Autonomous Robotics', 'Cyber Physical Systems', 'Capstone Major Project']
-  };
-
-  const subjects = subjectsBySemester[sem] || subjectsBySemester[5];
-  const overallAtt = academicRecord?.attendance_percentage !== undefined ? parseFloat(academicRecord.attendance_percentage) : 85.0;
-  const ise = academicRecord?.ise_marks || 20.0;
-  const mse = academicRecord?.mse_marks || 25.0;
-  const ese = academicRecord?.ese_marks || 60.0;
-
-  return subjects.map((subj, idx) => {
-    // Subject Marks calculation
-    const delta = (((student.id * 7 + sem * 13 + idx * 11) % 9) - 4);
-    const subIse = Math.min(30, Math.max(12, Math.round(Number(ise) + delta * 0.4)));
-    const subMse = Math.min(30, Math.max(12, Math.round(Number(mse) + delta * 0.3)));
-    const subEse = Math.min(70, Math.max(28, Math.round(Number(ese) * 0.7 + delta * 0.5)));
-    const total = Math.min(100, Math.round((subIse / 30 * 15) + (subMse / 30 * 15) + subEse));
-
-    let grade = 'P';
-    if (total >= 85) grade = 'O';
-    else if (total >= 75) grade = 'A+';
-    else if (total >= 65) grade = 'A';
-    else if (total >= 55) grade = 'B+';
-    else if (total >= 45) grade = 'B';
-    else if (total >= 40) grade = 'C';
-    else grade = 'F';
-
-    // Subject Attendance Analysis calculation
-    const totalConducted = 36 + (idx % 3) * 2; // e.g. 36, 38, 40 sessions
-    const attDelta = (((student.id * 5 + sem * 3 + idx * 7) % 7) - 3) * 1.5;
-    const subjectAttPct = Math.min(100, Math.max(45, parseFloat((overallAtt + attDelta).toFixed(1))));
-    const totalAttended = Math.round((subjectAttPct / 100) * totalConducted);
-    const isDefaulter = subjectAttPct < 75;
-
-    return {
-      name: subj,
-      code: `AIDS${sem}0${idx + 1}`,
-      subject: subj,
-      ise: subIse,
-      mse: subMse,
-      ese: subEse,
-      internal: subIse,
-      exam: subEse,
-      total,
-      grade,
-      status: total >= 40 ? 'Pass' : 'Backlog',
-      conducted: totalConducted,
-      attended: totalAttended,
-      attendance_pct: subjectAttPct,
-      defaulter: isDefaulter,
-      attendance: {
-        conducted: totalConducted,
-        attended: totalAttended,
-        percentage: subjectAttPct,
-        status: isDefaulter ? 'Below 75% Defaulter' : 'Good Standing',
-        isDefaulter
-      }
-    };
-  });
-};
+const { getSemesterSubjectEvaluation } = require('../services/academicEvaluation.service');
 
 // GET /api/mentor/students/:id (Strict Batch Isolation Verification across assigned batches)
 const getStudentDetail = async (req, res) => {
@@ -283,6 +214,18 @@ const getStudentDetail = async (req, res) => {
         subjects_failed_count: ar.subjects_failed_count,
         defaulter_flag: ar.defaulter_flag,
         subjects: getSemesterSubjectEvaluation(student, ar, ar.semester)
+      };
+    }
+
+    if (!semesterAnalysis[currentSem]) {
+      const fallbackRecord = academicRecords[0] || { attendance_percentage: 85.0, cgpa: 8.5 };
+      semesterAnalysis[currentSem] = {
+        semester: currentSem,
+        cgpa: fallbackRecord.cgpa || 8.0,
+        attendance_percentage: fallbackRecord.attendance_percentage || 85.0,
+        subjects_failed_count: 0,
+        defaulter_flag: 0,
+        subjects: getSemesterSubjectEvaluation(student, fallbackRecord, currentSem)
       };
     }
 

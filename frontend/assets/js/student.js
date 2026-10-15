@@ -144,20 +144,151 @@ function populateProfileView(student) {
 
 let currentAcademicRecords = [];
 
-// Academic Details View
+let studentSubjectAttChartInstance = null;
+let studentAcademicTrendChartInstance = null;
+
+function renderStudentAcademicCharts(subjectMarks, records) {
+  if (typeof Chart === 'undefined') return;
+
+  // 1. Current Semester Subject Attendance Bar Chart
+  const attCanvas = document.getElementById('st-chart-subject-attendance');
+  if (attCanvas) {
+    if (studentSubjectAttChartInstance) {
+      studentSubjectAttChartInstance.destroy();
+      studentSubjectAttChartInstance = null;
+    }
+
+    const labels = (subjectMarks || []).map(s => s.name || s.subject || 'Subject');
+    const dataValues = (subjectMarks || []).map(s => Number(s.attendance_pct ?? s.attendance?.percentage ?? 85.0));
+    const bgColors = dataValues.map(v => v >= 85 ? 'rgba(16, 185, 129, 0.85)' : (v >= 75 ? 'rgba(245, 158, 11, 0.85)' : 'rgba(239, 68, 68, 0.85)'));
+    const borderColors = dataValues.map(v => v >= 85 ? '#059669' : (v >= 75 ? '#d97706' : '#dc2626'));
+
+    studentSubjectAttChartInstance = new Chart(attCanvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Attendance %',
+            data: dataValues,
+            backgroundColor: bgColors,
+            borderColor: borderColors,
+            borderWidth: 1.5,
+            borderRadius: 6,
+            maxBarThickness: 45
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `Attendance: ${ctx.parsed.y}% ${ctx.parsed.y < 75 ? '(Defaulter <75%)' : '(Eligible)'}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            min: 0,
+            max: 100,
+            ticks: {
+              stepSize: 20,
+              callback: (val) => val + '%'
+            },
+            grid: { color: '#f1f5f9' }
+          },
+          x: {
+            ticks: {
+              font: { size: 10 },
+              maxRotation: 20,
+              minRotation: 0,
+              callback: function(val) {
+                const label = this.getLabelForValue(val);
+                return label.length > 16 ? label.substr(0, 14) + '...' : label;
+              }
+            },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // 2. Academic Progression Trend Chart (CGPA / SGPA Across Semesters)
+  const trendCanvas = document.getElementById('st-chart-academic-trend');
+  if (trendCanvas) {
+    if (studentAcademicTrendChartInstance) {
+      studentAcademicTrendChartInstance.destroy();
+      studentAcademicTrendChartInstance = null;
+    }
+
+    const sorted = [...(records || [])].sort((a, b) => a.semester - b.semester);
+    const trendLabels = sorted.length > 0 ? sorted.map(ar => `Semester ${ar.semester}`) : ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5'];
+    const trendData = sorted.length > 0 ? sorted.map(ar => parseFloat(ar.cgpa) || 8.0) : [8.2, 8.4, 8.6, 8.7, 8.9];
+
+    studentAcademicTrendChartInstance = new Chart(trendCanvas, {
+      type: 'line',
+      data: {
+        labels: trendLabels,
+        datasets: [
+          {
+            label: 'SGPA / CGPA',
+            data: trendData,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: '#2563eb',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `CGPA: ${Number(ctx.parsed.y).toFixed(2)}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            min: 4,
+            max: 10,
+            ticks: { stepSize: 1 },
+            grid: { color: '#f1f5f9' }
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+}
+
+// Academic Progression & Subject Details
 function populateAcademicView(records, subjectMarks) {
   currentAcademicRecords = records || [];
 
-  // 1. Populate Semester History Table (Previous & Current Semesters)
+  // 1. Populate Semester History Table (WITHOUT attendance % column as requested)
   const semHistoryTbody = document.getElementById('semester-history-tbody');
   if (semHistoryTbody) {
     if (!records || records.length === 0) {
-      semHistoryTbody.innerHTML = `<tr><td colspan="7" class="px-6 py-6 text-center text-slate-400 text-xs">No academic records recorded yet. Click '+ Add / Update Semester Record' to enter details.</td></tr>`;
+      semHistoryTbody.innerHTML = `<tr><td colspan="6" class="px-6 py-6 text-center text-slate-400 text-xs">No academic records recorded yet. Click '+ Add / Update Semester Record' to enter details.</td></tr>`;
     } else {
-      // Sort descending by semester
       const sortedRecords = [...records].sort((a, b) => b.semester - a.semester);
       semHistoryTbody.innerHTML = sortedRecords.map(ar => {
-        const isDefaulter = ar.defaulter_flag || ar.attendance_percentage < 75 || ar.subjects_failed_count > 0;
+        const isDefaulter = ar.defaulter_flag || ar.subjects_failed_count > 0;
         return `
           <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
             <td class="px-6 py-3.5 font-bold text-slate-800 text-xs">
@@ -165,13 +296,12 @@ function populateAcademicView(records, subjectMarks) {
               ${ar.semester === currentStudent?.semester ? '<span class="ml-1.5 px-1.5 py-0.5 text-[9px] bg-blue-100 text-blue-800 rounded font-semibold">Current</span>' : '<span class="ml-1.5 text-[10px] text-slate-400 font-normal">Past Sem</span>'}
             </td>
             <td class="px-6 py-3.5 font-mono font-bold text-blue-700 text-xs">${ar.cgpa ? Number(ar.cgpa).toFixed(2) : '--'}</td>
-            <td class="px-6 py-3.5 font-mono text-xs ${ar.attendance_percentage < 75 ? 'text-rose-600 font-bold' : 'text-slate-700'}">${ar.attendance_percentage}%</td>
             <td class="px-6 py-3.5 font-mono text-slate-600 text-[11px]">ISE: ${ar.ise_marks || '--'} | MSE: ${ar.mse_marks || '--'} | ESE: ${ar.ese_marks || '--'}</td>
             <td class="px-6 py-3.5 text-xs">
               ${ar.subjects_failed_count > 0 ? `<span class="px-2 py-0.5 rounded text-[10px] bg-rose-50 text-rose-700 font-semibold">${ar.subjects_failed_count} Backlog(s)</span>` : '<span class="text-emerald-600 text-xs font-semibold">0 (Clear)</span>'}
             </td>
             <td class="px-6 py-3.5 text-xs">
-              ${isDefaulter ? `<span class="px-2 py-0.5 rounded text-[10px] bg-rose-100 text-rose-800 font-bold">Defaulter Flag</span>` : `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 font-bold">Good Standing</span>`}
+              ${isDefaulter ? `<span class="px-2 py-0.5 rounded text-[10px] bg-rose-100 text-rose-800 font-bold">Attention Required</span>` : `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 font-bold">Good Standing</span>`}
             </td>
             <td class="px-6 py-3.5 text-right text-xs">
               <button onclick="openAcademicModal(${ar.semester})" class="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded border border-blue-200 transition">
@@ -184,21 +314,55 @@ function populateAcademicView(records, subjectMarks) {
     }
   }
 
-  // 2. Populate Current Semester Subject Breakdown Table
+  // 2. Populate Current Semester Subject Breakdown Table (Hand-in-hand with Mentor Profile)
   const tbody = document.getElementById('academic-table-tbody');
   if (tbody) {
     if (!subjectMarks || subjectMarks.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-400 text-xs">No subject records available.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-6 text-center text-slate-400 text-xs">No subject records available.</td></tr>`;
     } else {
-      tbody.innerHTML = subjectMarks.map(s => `
-        <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
-          <td class="px-6 py-3.5 font-semibold text-slate-800 text-xs">${s.subject}</td>
-          <td class="px-6 py-3.5 text-slate-600 text-xs font-mono">${s.internal} / 30</td>
-          <td class="px-6 py-3.5 text-slate-600 text-xs font-mono">${s.exam} / 70</td>
-          <td class="px-6 py-3.5 font-bold text-blue-600 text-xs font-mono">${s.total} / 100</td>
-          <td class="px-6 py-3.5 text-xs font-bold text-slate-900">${s.grade}</td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = subjectMarks.map((s, idx) => {
+        const name = s.name || s.subject || ('Subject ' + (idx + 1));
+        const code = s.code || `AIDS50${idx + 1}`;
+        const conducted = s.conducted ?? s.attendance?.conducted ?? 36;
+        const attended = s.attended ?? s.attendance?.attended ?? Math.round(conducted * 0.85);
+        const attendance_pct = s.attendance_pct ?? s.attendance?.percentage ?? parseFloat(((attended / conducted) * 100).toFixed(1));
+        const defaulter = s.defaulter ?? s.attendance?.isDefaulter ?? (attendance_pct < 75.0);
+        const ise = s.ise !== undefined ? s.ise : (s.internal !== undefined ? s.internal : 22);
+        const mse = s.mse !== undefined ? s.mse : 25;
+        const ese = s.ese !== undefined ? s.ese : (s.exam !== undefined ? s.exam : 60);
+        const total = s.total !== undefined ? s.total : Math.round(ise * 0.5 + mse * 0.5 + ese);
+        const grade = s.grade || (total >= 85 ? 'O' : (total >= 75 ? 'A+' : (total >= 65 ? 'A' : (total >= 50 ? 'B+' : 'B'))));
+        const status = s.status || (total >= 40 ? 'Pass' : 'Backlog');
+
+        return `
+          <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+            <td class="px-5 py-3.5 font-semibold text-slate-800 text-xs">
+              <div>${name}</div>
+              <span class="font-mono text-[10px] text-slate-400 font-normal">${code}</span>
+            </td>
+            <td class="px-5 py-3.5">
+              <div class="space-y-1 min-w-[170px]">
+                <div class="flex items-center justify-between text-[11px] font-mono">
+                  <span class="${defaulter ? 'text-rose-600 font-bold' : 'text-slate-700'}">${attended}/${conducted} sessions (${attendance_pct}%)</span>
+                  ${defaulter ? '<span class="px-1.5 py-0.2 rounded bg-rose-100 text-rose-700 text-[9px] font-bold">Defaulter &lt;75%</span>' : '<span class="text-emerald-600 font-semibold text-[9px]">Normal</span>'}
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                  <div class="h-1.5 rounded-full ${attendance_pct >= 85 ? 'bg-emerald-500' : (attendance_pct >= 75 ? 'bg-amber-500' : 'bg-rose-500')}" style="width: ${Math.min(100, attendance_pct)}%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5 text-slate-600 text-xs font-mono">${ise} / 30</td>
+            <td class="px-5 py-3.5 text-slate-600 text-xs font-mono">${mse} / 30</td>
+            <td class="px-5 py-3.5 text-slate-600 text-xs font-mono">${ese} / 70</td>
+            <td class="px-5 py-3.5 font-bold text-blue-600 text-xs font-mono">${total} / 100</td>
+            <td class="px-5 py-3.5 text-xs font-bold text-slate-900">
+              <span class="px-2 py-0.5 rounded font-bold text-xs ${status === 'Pass' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+                ${grade}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
   }
 
@@ -207,13 +371,23 @@ function populateAcademicView(records, subjectMarks) {
     curBadge.textContent = `Semester ${currentStudent.semester || 5}`;
   }
 
-  const latest = records && records[0] ? records[0] : { attendance_percentage: 82.45, subjects_failed_count: 0 };
+  // Summary Footer
+  const curSemNum = currentStudent?.semester || 5;
+  const currentSemRecord = (records || []).find(r => r.semester === curSemNum) || (records && records[0]) || { attendance_percentage: 85.0, subjects_failed_count: 0 };
   const attEl = document.getElementById('acad-overall-attendance');
-  if (attEl) attEl.textContent = `${latest.attendance_percentage}%`;
+  if (attEl) attEl.textContent = `${currentSemRecord.attendance_percentage}%`;
+
+  const defCount = (subjectMarks || []).filter(s => (s.defaulter || (s.attendance_pct ?? s.attendance?.percentage) < 75)).length;
   const belEl = document.getElementById('acad-below-attendance');
-  if (belEl) belEl.textContent = `${latest.subjects_failed_count} Subjects`;
+  if (belEl) belEl.textContent = `${defCount} Subject${defCount === 1 ? '' : 's'}`;
+
   const perfEl = document.getElementById('acad-overall-performance');
-  if (perfEl) perfEl.textContent = latest.defaulter_flag ? 'Needs Guidance' : 'Good Academic Standing';
+  if (perfEl) {
+    perfEl.textContent = (defCount > 0 || currentSemRecord.attendance_percentage < 75) ? 'Defaulter Notice (<75%)' : 'Good Academic Standing';
+  }
+
+  // Render Visual Charts
+  renderStudentAcademicCharts(subjectMarks, records);
 }
 
 function openAcademicModal(semester) {

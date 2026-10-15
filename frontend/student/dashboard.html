@@ -312,14 +312,13 @@
                         </button>
                     </div>
 
-                    <!-- Semester History Table -->
+                    <!-- Semester History Table (Without semester-wise attendance) -->
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] font-semibold border-b border-slate-200">
                                     <th class="px-6 py-3">Semester</th>
                                     <th class="px-6 py-3">CGPA / SGPA</th>
-                                    <th class="px-6 py-3">Attendance %</th>
                                     <th class="px-6 py-3">ISE / MSE / ESE</th>
                                     <th class="px-6 py-3">Backlogs</th>
                                     <th class="px-6 py-3">Status</th>
@@ -327,18 +326,47 @@
                                 </tr>
                             </thead>
                             <tbody id="semester-history-tbody">
-                                <tr><td colspan="7" class="px-6 py-6 text-center text-slate-400 text-xs">Loading semester records...</td></tr>
+                                <tr><td colspan="6" class="px-6 py-6 text-center text-slate-400 text-xs">Loading semester records...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Current Semester Subject Breakdown Card -->
+                <!-- Academic & Attendance Visual Analytics (Charts) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="shadcn-card p-6 space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm">Current Semester Subject Attendance</h3>
+                                <p class="text-xs text-slate-500">Subject attendance percentage vs 75% university requirement</p>
+                            </div>
+                            <span class="text-[10px] px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold rounded-lg border border-emerald-200">75% Threshold</span>
+                        </div>
+                        <div class="relative h-64 w-full">
+                            <canvas id="st-chart-subject-attendance"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="shadcn-card p-6 space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm">Academic Performance Progression Trend</h3>
+                                <p class="text-xs text-slate-500">SGPA / CGPA trajectory across all evaluated semesters</p>
+                            </div>
+                            <span class="text-[10px] px-2.5 py-1 bg-blue-50 text-blue-700 font-bold rounded-lg border border-blue-200 font-mono">10.0 Scale</span>
+                        </div>
+                        <div class="relative h-64 w-full">
+                            <canvas id="st-chart-academic-trend"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Semester Subject Breakdown Card (Hand-in-hand with Mentor Profile) -->
                 <div class="shadcn-card overflow-hidden">
                     <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                         <div>
-                            <h3 class="font-bold text-slate-900 text-base">Current Semester Subject Evaluation</h3>
-                            <p class="text-xs text-slate-500">Subject-level continuous internal evaluation and university exam marks</p>
+                            <h3 class="font-bold text-slate-900 text-base">Current Semester Subject Evaluation & Attendance</h3>
+                            <p class="text-xs text-slate-500">Internal CIE component scores, university exam marks, and subject attendance analysis</p>
                         </div>
                         <span id="current-sem-badge" class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-md font-semibold text-xs">Semester 5</span>
                     </div>
@@ -347,15 +375,17 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] font-semibold border-b border-slate-200">
-                                    <th class="px-6 py-3">Subject Name</th>
-                                    <th class="px-6 py-3">Internal Marks (ISE)</th>
-                                    <th class="px-6 py-3">Exam Marks (ESE)</th>
-                                    <th class="px-6 py-3">Total Marks</th>
-                                    <th class="px-6 py-3">Grade</th>
+                                    <th class="px-5 py-3.5">Subject Name</th>
+                                    <th class="px-5 py-3.5">Subject Attendance Analysis</th>
+                                    <th class="px-5 py-3.5">ISE (30)</th>
+                                    <th class="px-5 py-3.5">MSE (30)</th>
+                                    <th class="px-5 py-3.5">ESE (70)</th>
+                                    <th class="px-5 py-3.5">Total (100)</th>
+                                    <th class="px-5 py-3.5">Grade</th>
                                 </tr>
                             </thead>
                             <tbody id="academic-table-tbody">
-                                <tr><td colspan="5" class="px-6 py-8 text-center text-slate-400 text-sm">Loading academic records...</td></tr>
+                                <tr><td colspan="7" class="px-6 py-8 text-center text-slate-400 text-sm">Loading academic records...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -363,16 +393,16 @@
                     <!-- Summary Stats Footer -->
                     <div class="p-6 bg-slate-50 border-t border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                         <div class="p-3 bg-white rounded-lg border border-slate-200">
-                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Latest Attendance</span>
-                            <h4 id="acad-overall-attendance" class="text-xl font-extrabold text-blue-700 mt-0.5">82.45%</h4>
+                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Current Semester Attendance</span>
+                            <h4 id="acad-overall-attendance" class="text-xl font-extrabold text-blue-700 mt-0.5">85.0%</h4>
                         </div>
                         <div class="p-3 bg-white rounded-lg border border-slate-200">
-                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Subjects Below Threshold</span>
+                            <span class="text-slate-500 uppercase font-semibold text-[10px]">Defaulter Subjects (&lt;75%)</span>
                             <h4 id="acad-below-attendance" class="text-xl font-extrabold text-emerald-600 mt-0.5">0 Subjects</h4>
                         </div>
                         <div class="p-3 bg-white rounded-lg border border-slate-200">
                             <span class="text-slate-500 uppercase font-semibold text-[10px]">Academic Standing</span>
-                            <h4 id="acad-overall-performance" class="text-xl font-extrabold text-slate-900 mt-0.5">Good Progress</h4>
+                            <h4 id="acad-overall-performance" class="text-xl font-extrabold text-slate-900 mt-0.5">Good Academic Standing</h4>
                         </div>
                     </div>
                 </div>
@@ -724,6 +754,7 @@
         </div>
     </div>
 
+    <script src="/assets/js/vendor/chart.umd.min.js"></script>
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/auth.js"></script>
     <script src="/assets/js/student.js"></script>

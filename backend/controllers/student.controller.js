@@ -40,45 +40,7 @@ const getStudentByUserId = async (userId) => {
   return students.length > 0 ? students[0] : null;
 };
 
-// Dynamic Subject Mark Generator based on Student Year and actual Academic Records
-const getStudentSubjectMarks = (student, latestAcademic) => {
-  const year = student.year || 1;
-  const subjectsByYear = {
-    1: ['Applied Mathematics-I', 'Engineering Physics', 'Basic Electrical & Electronics', 'Programming & Problem Solving', 'Engineering Graphics'],
-    2: ['Discrete Mathematics', 'Data Structures & Algorithms', 'Database Management Systems', 'Digital Logic Design', 'Object Oriented Programming'],
-    3: ['Machine Learning', 'Operating Systems', 'Computer Networks', 'Design & Analysis of Algorithms', 'Artificial Intelligence'],
-    4: ['Deep Learning', 'Cloud Computing', 'Big Data Analytics', 'Natural Language Processing', 'Information & Cyber Security']
-  };
-
-  const subjects = subjectsByYear[year] || subjectsByYear[1];
-  const ise = latestAcademic?.ise_marks || 18.0;
-  const mse = latestAcademic?.mse_marks || 24.0;
-  const ese = latestAcademic?.ese_marks || 58.0;
-
-  return subjects.map((subj, idx) => {
-    // slight deterministic variation per subject based on student id and subject index
-    const delta = (((student.id * 7 + idx * 11) % 9) - 4);
-    const internal = Math.min(30, Math.max(10, Math.round((ise / 20 * 15 + mse / 30 * 15) + delta * 0.4)));
-    const exam = Math.min(70, Math.max(25, Math.round(ese + delta * 0.8)));
-    const total = internal + exam;
-    let grade = 'P';
-    if (total >= 85) grade = 'O';
-    else if (total >= 75) grade = 'A+';
-    else if (total >= 65) grade = 'A';
-    else if (total >= 55) grade = 'B+';
-    else if (total >= 45) grade = 'B';
-    else if (total >= 40) grade = 'C';
-    else grade = 'F';
-
-    return {
-      subject: subj,
-      internal,
-      exam,
-      total,
-      grade
-    };
-  });
-};
+const { getSemesterSubjectEvaluation } = require('../services/academicEvaluation.service');
 
 // GET /api/student/dashboard
 const getStudentDashboard = async (req, res) => {
@@ -94,16 +56,17 @@ const getStudentDashboard = async (req, res) => {
       [student.id]
     );
 
-    const latestAcademic = academicRecords[0] || {
-      attendance_percentage: 82.45,
-      cgpa: 7.42,
-      ise_marks: 19.5,
-      mse_marks: 27.0,
-      ese_marks: 62.0
+    const currentSem = student.semester || (academicRecords[0] ? academicRecords[0].semester : 5);
+    const latestAcademic = academicRecords.find(ar => ar.semester === currentSem) || academicRecords[0] || {
+      attendance_percentage: 85.0,
+      cgpa: 8.0,
+      ise_marks: 20.0,
+      mse_marks: 25.0,
+      ese_marks: 60.0
     };
 
-    // Dynamic Subject breakdown based on academic records
-    const subjectMarks = getStudentSubjectMarks(student, latestAcademic);
+    // Unified Dynamic Subject breakdown and attendance analysis matching mentor mentee profile
+    const subjectMarks = getSemesterSubjectEvaluation(student, latestAcademic, currentSem);
 
     // Meetings
     const meetings = student.batch_id ? await db.query(
