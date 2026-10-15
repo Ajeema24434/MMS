@@ -216,17 +216,39 @@ async function loadMentorActivities() {
       <td class="px-6 py-4 text-xs">${getActivityStatusBadge(a.status)}</td>
       <td class="px-6 py-4 text-xs text-slate-600 font-mono">${a.mentor_remarks || '<span class="text-slate-400 italic">None</span>'}</td>
       <td class="px-6 py-4 text-xs">
-        <div class="flex items-center space-x-1.5">
-          <button onclick="quickVerifyActivity(${a.id}, 'Approved')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded shadow-sm transition">
-            Approve
-          </button>
-          <button onclick="quickVerifyActivity(${a.id}, 'Rejected')" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded shadow-sm transition">
-            Reject
-          </button>
-          <button onclick="openVerifyActivityModal(${a.id}, '${(a.student_name + ': ' + a.title).replace(/'/g, "\\'")}', '${(a.evidence_url || 'certificate.pdf').replace(/'/g, "\\'")}', '${a.status}', '${(a.mentor_remarks || '').replace(/'/g, "\\'")}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded border border-slate-300 transition">
-            Remarks
-          </button>
-        </div>
+        ${a.status === 'Approved' ? `
+          <div class="flex items-center space-x-1.5">
+            <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md font-bold text-xs inline-flex items-center space-x-1">
+              <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              <span>Approved</span>
+            </span>
+            <button onclick="openVerifyActivityModal(${a.id}, '${(a.student_name + ': ' + a.title).replace(/'/g, "\\'")}', '${(a.evidence_url || 'certificate.pdf').replace(/'/g, "\\'")}', '${a.status}', '${(a.mentor_remarks || '').replace(/'/g, "\\'")}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded border border-slate-300 transition">
+              Remarks
+            </button>
+          </div>
+        ` : (a.status === 'Rejected' ? `
+          <div class="flex items-center space-x-1.5">
+            <span class="px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-md font-bold text-xs inline-flex items-center space-x-1">
+              <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              <span>Rejected</span>
+            </span>
+            <button onclick="openVerifyActivityModal(${a.id}, '${(a.student_name + ': ' + a.title).replace(/'/g, "\\'")}', '${(a.evidence_url || 'certificate.pdf').replace(/'/g, "\\'")}', '${a.status}', '${(a.mentor_remarks || '').replace(/'/g, "\\'")}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded border border-slate-300 transition">
+              Remarks
+            </button>
+          </div>
+        ` : `
+          <div class="flex items-center space-x-1.5">
+            <button onclick="quickVerifyActivity(${a.id}, 'Approved')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded shadow-sm transition">
+              Approve
+            </button>
+            <button onclick="quickVerifyActivity(${a.id}, 'Rejected')" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded shadow-sm transition">
+              Reject
+            </button>
+            <button onclick="openVerifyActivityModal(${a.id}, '${(a.student_name + ': ' + a.title).replace(/'/g, "\\'")}', '${(a.evidence_url || 'certificate.pdf').replace(/'/g, "\\'")}', '${a.status}', '${(a.mentor_remarks || '').replace(/'/g, "\\'")}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded border border-slate-300 transition">
+              Remarks
+            </button>
+          </div>
+        `)}
       </td>
     </tr>
   `).join('');
@@ -339,16 +361,35 @@ async function saveMeetingAttendanceSubmit() {
   }
 }
 
-// CERTIFICATE VERIFICATION MODAL CONTROLS
 function openVerifyActivityModal(id, title, evidence, status, remarks) {
   const modal = document.getElementById('verify-activity-modal');
   if (!modal) return;
 
-  document.getElementById('va-id').value = id;
-  document.getElementById('va-title').textContent = title || 'Mentee Activity';
-  document.getElementById('va-evidence').textContent = evidence || 'certificate.pdf';
-  document.getElementById('va-status').value = status || 'Approved';
-  document.getElementById('va-remarks').value = remarks || '';
+  const idEl = document.getElementById('va-id');
+  if (idEl) idEl.value = id;
+
+  const titleEl = document.getElementById('va-title');
+  if (titleEl) titleEl.textContent = title || 'Mentee Activity';
+
+  const evEl = document.getElementById('va-evidence');
+  if (evEl) evEl.textContent = evidence || 'certificate.pdf';
+
+  const evLink = document.getElementById('va-evidence-link');
+  if (evLink) {
+    if (evidence && evidence !== 'certificate.pdf') {
+      evLink.href = evidence.startsWith('/uploads/') ? evidence : (evidence.startsWith('http') ? evidence : `/uploads/activities/${evidence}`);
+      evLink.textContent = evidence.split('/').pop();
+    } else {
+      evLink.href = '#';
+      evLink.textContent = 'certificate.pdf';
+    }
+  }
+
+  const statusEl = document.getElementById('va-status');
+  if (statusEl) statusEl.value = status || 'Approved';
+
+  const remarksEl = document.getElementById('va-remarks');
+  if (remarksEl) remarksEl.value = remarks || '';
 
   modal.classList.remove('hidden');
 }
@@ -439,9 +480,126 @@ function getRiskBadgeHTML(level) {
 }
 
 // Student Profile View for Mentor
+let currentStudentAcademicAnalysis = {};
+let currentSelectedSemester = 5;
+let currentMenteeStudentId = null;
+
+function selectSemesterAnalysisTab(sem) {
+  currentSelectedSemester = sem;
+  renderSubjectBreakdownForSem(sem);
+}
+
+function renderSubjectBreakdownForSem(sem) {
+  // Update tab buttons visual style
+  document.querySelectorAll('#sem-tabs-container button').forEach(btn => {
+    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer';
+  });
+  const activeBtn = document.getElementById(`sem-tab-btn-${sem}`);
+  if (activeBtn) {
+    activeBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow cursor-pointer';
+  }
+
+  const analysis = currentStudentAcademicAnalysis[sem] || {
+    semester: sem,
+    attendance_percentage: 85,
+    cgpa: 8.5,
+    subjects: []
+  };
+
+  const attEl = document.getElementById('sub-sel-att');
+  const defEl = document.getElementById('sub-sel-def');
+  const cgpaEl = document.getElementById('sub-sel-cgpa');
+  const tbody = document.getElementById('sub-breakdown-tbody');
+
+  if (attEl) attEl.textContent = `${analysis.attendance_percentage}%`;
+  if (cgpaEl) cgpaEl.textContent = analysis.cgpa ? Number(analysis.cgpa).toFixed(2) : '--';
+
+  const subjects = analysis.subjects || [];
+  const defaulterCount = subjects.filter(s => s.defaulter || s.attendance_pct < 75).length;
+  if (defEl) {
+    defEl.textContent = `${defaulterCount} Subject${defaulterCount === 1 ? '' : 's'}`;
+    defEl.className = `text-xl font-black ${defaulterCount > 0 ? 'text-rose-600' : 'text-emerald-600'}`;
+  }
+
+  if (tbody) {
+    if (subjects.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-6 text-center text-slate-400">No subject-level evaluation data recorded for Semester ${sem}.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = subjects.map(s => `
+      <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+        <td class="px-5 py-3.5 font-semibold text-slate-900">
+          <div>${s.name}</div>
+          <span class="font-mono text-[10px] text-slate-400 font-normal">${s.code}</span>
+        </td>
+        <td class="px-5 py-3.5">
+          <div class="space-y-1 min-w-[170px]">
+            <div class="flex items-center justify-between text-[11px] font-mono">
+              <span class="${s.defaulter ? 'text-rose-600 font-bold' : 'text-slate-700'}">${s.attended}/${s.conducted} sessions (${s.attendance_pct}%)</span>
+              ${s.defaulter 
+                ? '<span class="px-1.5 py-0.2 rounded bg-rose-100 text-rose-700 text-[9px] font-bold">Defaulter &lt;75%</span>' 
+                : '<span class="text-emerald-600 font-semibold text-[9px]">Normal</span>'}
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div class="h-1.5 rounded-full ${s.attendance_pct >= 85 ? 'bg-emerald-500' : (s.attendance_pct >= 75 ? 'bg-amber-500' : 'bg-rose-500')}" style="width: ${Math.min(100, s.attendance_pct)}%"></div>
+            </div>
+          </div>
+        </td>
+        <td class="px-5 py-3.5 font-mono text-slate-700">${s.ise} / 30</td>
+        <td class="px-5 py-3.5 font-mono text-slate-700">${s.mse} / 30</td>
+        <td class="px-5 py-3.5 font-mono text-slate-700">${s.ese} / 70</td>
+        <td class="px-5 py-3.5 font-mono font-bold text-slate-900">${s.total} / 100</td>
+        <td class="px-5 py-3.5">
+          <span class="px-2 py-0.5 rounded font-bold text-xs ${s.status === 'Pass' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+            ${s.grade}
+          </span>
+        </td>
+      </tr>
+    `).join('');
+  }
+}
+
+function openMentorAcademicModal(sem = 5, att = 85.0, cgpa = 8.5, failed = 0, ise = 20, mse = 25, ese = 60) {
+  const modal = document.getElementById('mentor-academic-modal');
+  if (!modal) return;
+
+  const semSelect = document.getElementById('m-acad-sem');
+  if (semSelect) semSelect.value = sem || 5;
+
+  const attInput = document.getElementById('m-acad-attendance');
+  if (attInput) attInput.value = att !== undefined ? att : 85.0;
+
+  const cgpaInput = document.getElementById('m-acad-cgpa');
+  if (cgpaInput) cgpaInput.value = cgpa !== undefined ? cgpa : 8.5;
+
+  const failedInput = document.getElementById('m-acad-failed');
+  if (failedInput) failedInput.value = failed !== undefined ? failed : 0;
+
+  const iseInput = document.getElementById('m-acad-ise');
+  if (iseInput) iseInput.value = ise !== undefined ? ise : 20;
+
+  const mseInput = document.getElementById('m-acad-mse');
+  if (mseInput) mseInput.value = mse !== undefined ? mse : 25;
+
+  const eseInput = document.getElementById('m-acad-ese');
+  if (eseInput) eseInput.value = ese !== undefined ? ese : 60;
+
+  const remInput = document.getElementById('m-acad-remarks');
+  if (remInput) remInput.value = '';
+
+  modal.classList.remove('hidden');
+}
+
+function closeMentorAcademicModal() {
+  const modal = document.getElementById('mentor-academic-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
 async function loadMentorStudentPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const studentId = urlParams.get('id');
+  currentMenteeStudentId = studentId;
 
   const errorBox = document.getElementById('error-box');
   const errorMsg = document.getElementById('error-box-msg');
@@ -465,7 +623,9 @@ async function loadMentorStudentPage() {
   if (errorBox) errorBox.classList.add('hidden');
   if (profileContent) profileContent.classList.remove('hidden');
 
-  const { student, academicRecords, activities, mlDemoResult } = res;
+  const { student, currentSemester, academicRecords, semesterAnalysis, activities, mlDemoResult } = res;
+  currentStudentAcademicAnalysis = semesterAnalysis || {};
+  currentSelectedSemester = currentSemester || student.semester || 5;
 
   const setName = (id, val) => {
     const el = document.getElementById(id);
@@ -473,10 +633,11 @@ async function loadMentorStudentPage() {
   };
 
   setName('st-detail-name', student.name);
-  setName('st-detail-dept-div', `${student.department || 'AI & DS'} — Year ${student.year || 1} (Division ${student.division || 'A'})`);
+  setName('st-detail-dept-div', `${student.department || 'AI & DS'} — Year ${student.year || 3} (Division ${student.division || 'A'})`);
   setName('st-detail-urn', student.urn);
   setName('st-detail-roll', student.roll_no);
   setName('st-detail-batch', student.batch_name || 'Assigned Batch');
+  setName('st-detail-sem', currentSemester || student.semester || 5);
 
   const riskBadge = document.getElementById('ml-risk-badge');
   if (riskBadge) {
@@ -489,63 +650,234 @@ async function loadMentorStudentPage() {
     confEl.textContent = `Confidence: ${confVal}% (${mlDemoResult?.support_priority || 'Standard'} Priority)`;
   }
 
-  // Populate Academic Records
+  // 1. Semester Progression KPI Bar
+  const totalBacklogs = (academicRecords || []).reduce((acc, ar) => acc + (parseInt(ar.subjects_failed_count) || 0), 0);
+  const totalAtt = (academicRecords || []).reduce((acc, ar) => acc + (parseFloat(ar.attendance_percentage) || 0), 0);
+  const avgAtt = academicRecords && academicRecords.length > 0 ? (totalAtt / academicRecords.length).toFixed(1) : '--';
+  const validCgpas = (academicRecords || []).filter(ar => ar.cgpa && !isNaN(parseFloat(ar.cgpa)));
+  const latestCgpa = validCgpas.length > 0 ? parseFloat(validCgpas[0].cgpa).toFixed(2) : '--';
+  const hasDefaulter = (academicRecords || []).some(ar => (parseFloat(ar.attendance_percentage) < 75) || ar.defaulter_flag);
+
+  setName('prog-cgpa', latestCgpa);
+  setName('prog-attendance', avgAtt !== '--' ? `${avgAtt}%` : '--');
+  
+  const backlogsEl = document.getElementById('prog-backlogs');
+  if (backlogsEl) {
+    if (totalBacklogs > 0) {
+      backlogsEl.textContent = `${totalBacklogs} Backlog${totalBacklogs > 1 ? 's' : ''}`;
+      backlogsEl.className = 'text-lg font-black text-rose-600 font-mono';
+    } else {
+      backlogsEl.textContent = '0 Clear';
+      backlogsEl.className = 'text-lg font-black text-emerald-600 font-mono';
+    }
+  }
+
+  const compEl = document.getElementById('prog-compliance');
+  if (compEl) {
+    if (hasDefaulter) {
+      compEl.textContent = 'Defaulter Alert (<75%)';
+      compEl.className = 'text-xs font-bold text-rose-700 block mt-1';
+    } else {
+      compEl.textContent = 'Good Standing (Eligible)';
+      compEl.className = 'text-xs font-bold text-emerald-700 block mt-1';
+    }
+  }
+
+  // 2. Populate Semester-Wise Academic Records Table
   const academicTbody = document.getElementById('st-academic-tbody');
   if (academicTbody) {
     if (!academicRecords || academicRecords.length === 0) {
-      academicTbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-400 text-xs">No academic semester records found.</td></tr>`;
+      academicTbody.innerHTML = `<tr><td colspan="7" class="px-6 py-6 text-center text-slate-400 text-xs">No academic semester records found. Click "+ Add / Update Attendance & Marks" above.</td></tr>`;
     } else {
-      academicTbody.innerHTML = academicRecords.map(ar => `
-        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-          <td class="px-6 py-4 font-semibold text-slate-800 text-sm">Semester ${ar.semester}</td>
-          <td class="px-6 py-4 font-mono text-slate-700 text-sm font-bold">${ar.cgpa ? Number(ar.cgpa).toFixed(2) : '--'}</td>
-          <td class="px-6 py-4 font-mono text-slate-700 text-sm">${ar.attendance_percentage}%</td>
-          <td class="px-6 py-4 font-mono text-slate-600 text-xs">ISE: ${ar.ise_marks || '--'} | MSE: ${ar.mse_marks || '--'} | ESE: ${ar.ese_marks || '--'}</td>
-          <td class="px-6 py-4 text-sm">${ar.subjects_failed_count > 0 ? `<span class="px-2 py-0.5 rounded text-xs bg-rose-50 text-rose-700 font-semibold">${ar.subjects_failed_count} Backlog(s)</span>` : '<span class="text-emerald-600 font-semibold text-xs">All Clear</span>'}</td>
-        </tr>
+      academicTbody.innerHTML = academicRecords.map(ar => {
+        const isCurrent = (ar.semester === currentSemester) || (ar.semester === student.semester);
+        const isDefaulter = ar.attendance_percentage < 75 || ar.defaulter_flag || ar.subjects_failed_count > 0;
+        return `
+          <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+            <td class="px-6 py-4 font-bold text-slate-800 text-sm">
+              Semester ${ar.semester}
+              ${isCurrent ? '<span class="ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200 uppercase">Current</span>' : ''}
+            </td>
+            <td class="px-6 py-4 font-mono text-slate-900 text-sm font-bold">${ar.cgpa ? Number(ar.cgpa).toFixed(2) : '--'}</td>
+            <td class="px-6 py-4 font-mono text-sm">
+              <span class="${ar.attendance_percentage < 75 ? 'text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded' : 'text-slate-800 font-semibold'}">
+                ${ar.attendance_percentage}%
+              </span>
+            </td>
+            <td class="px-6 py-4 font-mono text-slate-600 text-xs">ISE: ${ar.ise_marks || '--'} | MSE: ${ar.mse_marks || '--'} | ESE: ${ar.ese_marks || '--'}</td>
+            <td class="px-6 py-4 font-mono text-xs font-semibold ${ar.subjects_failed_count > 0 ? 'text-rose-600' : 'text-slate-700'}">
+              ${ar.subjects_failed_count > 0 ? `${ar.subjects_failed_count} Backlog(s)` : '0'}
+            </td>
+            <td class="px-6 py-4 text-xs font-bold">
+              ${isDefaulter 
+                ? '<span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">Defaulter Alert</span>' 
+                : '<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">All Clear</span>'}
+            </td>
+            <td class="px-6 py-4 text-right">
+              <button onclick="openMentorAcademicModal(${ar.semester}, ${ar.attendance_percentage}, ${ar.cgpa || 8.0}, ${ar.subjects_failed_count || 0}, ${ar.ise_marks || 20}, ${ar.mse_marks || 25}, ${ar.ese_marks || 60})" class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded border border-indigo-200 transition cursor-pointer">
+                Edit
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  // 3. Render Interactive Semester Selector Tabs & Subject Breakdown
+  const semTabsContainer = document.getElementById('sem-tabs-container');
+  const semKeys = Object.keys(currentStudentAcademicAnalysis).map(Number).sort((a, b) => b - a);
+  const activeSem = semKeys.includes(currentSelectedSemester) ? currentSelectedSemester : (semKeys[0] || 5);
+
+  if (semTabsContainer) {
+    if (semKeys.length === 0) {
+      semTabsContainer.innerHTML = `
+        <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow">
+          Sem ${currentSelectedSemester} (Current)
+        </button>
+      `;
+    } else {
+      semTabsContainer.innerHTML = semKeys.map(sem => `
+        <button type="button" onclick="selectSemesterAnalysisTab(${sem})" id="sem-tab-btn-${sem}" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${sem === activeSem ? 'bg-indigo-600 text-white shadow' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+          Sem ${sem} ${sem === (currentSemester || student.semester || 5) ? '(Current)' : ''}
+        </button>
       `).join('');
     }
   }
 
-  // Populate Activities with Certificate Verification Controls
+  renderSubjectBreakdownForSem(activeSem);
+
+  // 4. Populate Activities with Certificate Verification Controls (Hide Approve/Reject on Approved status)
   const activitiesList = document.getElementById('st-activities-list');
   if (activitiesList) {
+    const actBadge = document.getElementById('act-count-badge');
+    if (actBadge) actBadge.textContent = `${activities ? activities.length : 0} Records`;
+
     if (!activities || activities.length === 0) {
-      activitiesList.innerHTML = `<p class="text-xs text-slate-400">No achievements recorded yet.</p>`;
+      activitiesList.innerHTML = `<p class="text-xs text-slate-400 py-3 text-center">No achievements recorded yet.</p>`;
     } else {
-      activitiesList.innerHTML = activities.map(a => `
-        <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div class="space-y-1">
-            <div class="flex items-center space-x-2">
-              <span class="text-sm font-bold text-slate-900">${a.title}</span>
-              <span class="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-700 font-semibold rounded border border-indigo-100">${a.category}</span>
-              ${getActivityStatusBadge(a.status)}
+      activitiesList.innerHTML = activities.map(a => {
+        const certFileName = a.evidence_url ? a.evidence_url.split('/').pop() : 'certificate.pdf';
+        const certLink = a.evidence_url ? `
+          <a href="${a.evidence_url}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 font-semibold underline hover:text-indigo-800">
+            Certificate: ${certFileName}
+          </a>
+        ` : `<span class="text-slate-400 italic">No file attached</span>`;
+
+        // Render Action Buttons:
+        // After approval, approve and reject options MUST NOT be shown; "Approved" badge must be shown.
+        let actionButtonsHtml = '';
+        if (a.status === 'Approved') {
+          actionButtonsHtml = `
+            <div class="flex items-center space-x-1.5 flex-shrink-0">
+              <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md font-bold text-xs inline-flex items-center space-x-1">
+                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                <span>Approved</span>
+              </span>
+              <button onclick="openVerifyActivityModal(${a.id}, '${a.title.replace(/'/g, "\\'")}', '${(a.evidence_url || 'certificate.pdf').replace(/'/g, "\\'")}', '${a.status}', '${(a.mentor_remarks || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded border border-slate-300 transition cursor-pointer">
+                Remarks
+              </button>
             </div>
-            <p class="text-xs text-slate-600">${a.description || 'Achievement submitted by student.'}</p>
-            <div class="flex flex-wrap items-center gap-x-3 text-[11px] text-slate-500 font-mono">
-              <span>Date: ${a.date_achieved ? new Date(a.date_achieved).toLocaleDateString() : '2026'}</span>
-              <span>•</span>
-              <span class="text-indigo-600 font-medium underline">Certificate: ${a.evidence_url || 'certificate.pdf'}</span>
-              ${a.mentor_remarks ? `<span>•</span><span class="text-slate-700 italic">Mentor Remarks: "${a.mentor_remarks}"</span>` : ''}
+          `;
+        } else if (a.status === 'Rejected') {
+          actionButtonsHtml = `
+            <div class="flex items-center space-x-1.5 flex-shrink-0">
+              <span class="px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-md font-bold text-xs inline-flex items-center space-x-1">
+                <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <span>Rejected</span>
+              </span>
+              <button onclick="openVerifyActivityModal(${a.id}, '${a.title.replace(/'/g, "\\'")}', '${(a.evidence_url || 'certificate.pdf').replace(/'/g, "\\'")}', '${a.status}', '${(a.mentor_remarks || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded border border-slate-300 transition cursor-pointer">
+                Remarks
+              </button>
             </div>
+          `;
+        } else {
+          actionButtonsHtml = `
+            <div class="flex items-center space-x-1.5 flex-shrink-0">
+              <button onclick="quickVerifyActivity(${a.id}, 'Approved')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded shadow-sm transition cursor-pointer">
+                Approve
+              </button>
+              <button onclick="quickVerifyActivity(${a.id}, 'Rejected')" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs rounded shadow-sm transition cursor-pointer">
+                Reject
+              </button>
+              <button onclick="openVerifyActivityModal(${a.id}, '${a.title.replace(/'/g, "\\'")}', '${(a.evidence_url || 'certificate.pdf').replace(/'/g, "\\'")}', '${a.status}', '${(a.mentor_remarks || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded border border-slate-300 transition cursor-pointer">
+                Remarks
+              </button>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2">
+                <span class="text-sm font-bold text-slate-900">${a.title}</span>
+                <span class="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-700 font-semibold rounded border border-indigo-100">${a.category}</span>
+                ${getActivityStatusBadge(a.status)}
+              </div>
+              <p class="text-xs text-slate-600">${a.description || 'Achievement submitted by student.'}</p>
+              <div class="flex flex-wrap items-center gap-x-3 text-[11px] text-slate-500 font-mono">
+                <span>Date: ${a.date_achieved ? new Date(a.date_achieved).toLocaleDateString() : '2026'}</span>
+                <span>•</span>
+                ${certLink}
+                ${a.mentor_remarks ? `<span>•</span><span class="text-slate-700 italic">Mentor Remarks: "${a.mentor_remarks}"</span>` : ''}
+              </div>
+            </div>
+            ${actionButtonsHtml}
           </div>
-          <div class="flex items-center space-x-1.5 flex-shrink-0">
-            <button onclick="quickVerifyActivity(${a.id}, 'Approved')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded shadow-sm transition">
-              Approve
-            </button>
-            <button onclick="quickVerifyActivity(${a.id}, 'Rejected')" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs rounded shadow-sm transition">
-              Reject
-            </button>
-            <button onclick="openVerifyActivityModal(${a.id}, '${a.title.replace(/'/g, "\\'")}', '${(a.evidence_url || 'certificate.pdf').replace(/'/g, "\\'")}', '${a.status}', '${(a.mentor_remarks || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded border border-slate-300 transition">
-              Remarks
-            </button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
   }
 
-  // Ensure verify-activity-form listener is attached
+  // 5. Ensure mentor-academic-form listener is attached
+  const acadForm = document.getElementById('mentor-academic-form');
+  if (acadForm && !acadForm.dataset.listenerAttached) {
+    acadForm.dataset.listenerAttached = 'true';
+    acadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const sem = document.getElementById('m-acad-sem').value;
+      const att = document.getElementById('m-acad-attendance').value;
+      const cgpa = document.getElementById('m-acad-cgpa').value;
+      const failed = document.getElementById('m-acad-failed').value;
+      const ise = document.getElementById('m-acad-ise').value;
+      const mse = document.getElementById('m-acad-mse').value;
+      const ese = document.getElementById('m-acad-ese').value;
+      const remarks = document.getElementById('m-acad-remarks').value.trim();
+
+      const submitBtn = document.getElementById('m-acad-save-btn');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving Record...';
+      }
+
+      const res = await API.post(`/mentor/students/${studentId}/academic`, {
+        semester: sem,
+        attendance_percentage: att,
+        cgpa,
+        subjects_failed_count: failed,
+        ise_marks: ise,
+        mse_marks: mse,
+        ese_marks: ese,
+        remarks
+      });
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save Attendance & Marks';
+      }
+
+      if (res.success) {
+        closeMentorAcademicModal();
+        alert('Mentee attendance and academic record updated successfully!');
+        await loadMentorStudentPage();
+      } else {
+        alert(res.message || 'Error updating academic record.');
+      }
+    });
+  }
+
+  // 6. Ensure verify-activity-form listener is attached
   const vForm = document.getElementById('verify-activity-form');
   if (vForm && !vForm.dataset.listenerAttached) {
     vForm.dataset.listenerAttached = 'true';

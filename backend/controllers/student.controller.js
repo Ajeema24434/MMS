@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const db = require('../config/db');
 const logger = require('../utils/logger');
 
@@ -350,7 +352,7 @@ const getStudentActivities = async (req, res) => {
 // POST /api/student/activities
 const addStudentActivity = async (req, res) => {
   try {
-    const { title, category, description, date_achieved, evidence_url } = req.body;
+    const { title, category, description, date_achieved, evidence_url, file_data, file_name } = req.body;
     if (!title || !category || !date_achieved) {
       return res.status(400).json({ success: false, message: 'Activity name, category, and date are required.' });
     }
@@ -358,9 +360,46 @@ const addStudentActivity = async (req, res) => {
     const student = await getStudentByUserId(req.user.id);
     if (!student) return res.status(404).json({ success: false, message: 'Student record not found.' });
 
+    let savedEvidenceUrl = evidence_url || 'certificate.pdf';
+
+    // Handle Certificate File Upload (PDF, PNG, JPEG with max 25KB limit)
+    if (file_data) {
+      const parts = file_data.split(',');
+      const base64Str = parts.length > 1 ? parts[1] : parts[0];
+      const buffer = Buffer.from(base64Str, 'base64');
+
+      // Strict 25KB file size validation (25 * 1024 bytes = 25600 bytes)
+      if (buffer.length > 25600) {
+        return res.status(400).json({
+          success: false,
+          message: `File size is ${(buffer.length / 1024).toFixed(1)} KB, which exceeds the maximum allowed limit of 25 KB.`
+        });
+      }
+
+      const origName = file_name || 'certificate.pdf';
+      const ext = path.extname(origName).toLowerCase();
+      const allowedExts = ['.pdf', '.png', '.jpg', '.jpeg'];
+      if (!allowedExts.includes(ext)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid file format. Only PDF, PNG, and JPEG files are allowed.'
+        });
+      }
+
+      const sanitizedBase = path.basename(origName, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
+      const generatedFileName = `${student.roll_no || 'ST'}_${Date.now()}_${sanitizedBase}${ext}`;
+      const uploadDir = path.join(__dirname, '../uploads/activities');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const filePath = path.join(uploadDir, generatedFileName);
+      fs.writeFileSync(filePath, buffer);
+      savedEvidenceUrl = `/uploads/activities/${generatedFileName}`;
+    }
+
     const actRes = await db.query(
       `INSERT INTO activities (student_id, title, category, description, date_achieved, evidence_url, status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')`,
-      [student.id, title, category, description || '', date_achieved, evidence_url || 'certificate.pdf']
+      [student.id, title, category, description || '', date_achieved, savedEvidenceUrl]
     );
 
     // Simultaneously notify assigned mentor
@@ -373,8 +412,9 @@ const addStudentActivity = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Activity submitted successfully for mentor verification.',
-      activityId: actRes.insertId
+      message: 'Activity and certificate submitted successfully for mentor verification.',
+      activityId: actRes.insertId,
+      evidence_url: savedEvidenceUrl
     });
   } catch (err) {
     logger.error('Error submitting activity:', err);

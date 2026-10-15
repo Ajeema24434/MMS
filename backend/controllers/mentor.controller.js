@@ -164,6 +164,77 @@ const getAssignedStudents = async (req, res) => {
   }
 };
 
+// Dynamic Subject Mark & Attendance Generator for all Semesters (1 to 8)
+const getSemesterSubjectEvaluation = (student, academicRecord, targetSemester) => {
+  const sem = parseInt(targetSemester) || 1;
+  const subjectsBySemester = {
+    1: ['Engineering Mathematics-I', 'Engineering Physics', 'Basic Electrical Engineering', 'Programming & Problem Solving', 'Engineering Graphics'],
+    2: ['Engineering Mathematics-II', 'Engineering Chemistry', 'Basic Electronics Engineering', 'Engineering Mechanics', 'Workshop Practice'],
+    3: ['Discrete Mathematics', 'Data Structures & Algorithms', 'Object Oriented Programming', 'Digital Logic & Computer Design', 'Humanities & Social Sciences'],
+    4: ['Applied Statistics & Probability', 'Database Management Systems', 'Operating Systems', 'Computer Networks', 'Software Engineering'],
+    5: ['Machine Learning', 'Design & Analysis of Algorithms', 'Artificial Intelligence', 'Theory of Computation', 'Web Application Development'],
+    6: ['Deep Learning', 'Data Mining & Data Warehousing', 'Natural Language Processing', 'Information & Cyber Security', 'Cloud Computing'],
+    7: ['Big Data Analytics', 'Distributed Systems', 'Reinforcement Learning', 'Internet of Things & Edge AI', 'Open Elective - Project Management'],
+    8: ['High Performance Computing', 'MLOps & AI Systems Engineering', 'Autonomous Robotics', 'Cyber Physical Systems', 'Capstone Major Project']
+  };
+
+  const subjects = subjectsBySemester[sem] || subjectsBySemester[5];
+  const overallAtt = academicRecord?.attendance_percentage !== undefined ? parseFloat(academicRecord.attendance_percentage) : 85.0;
+  const ise = academicRecord?.ise_marks || 20.0;
+  const mse = academicRecord?.mse_marks || 25.0;
+  const ese = academicRecord?.ese_marks || 60.0;
+
+  return subjects.map((subj, idx) => {
+    // Subject Marks calculation
+    const delta = (((student.id * 7 + sem * 13 + idx * 11) % 9) - 4);
+    const subIse = Math.min(30, Math.max(12, Math.round(Number(ise) + delta * 0.4)));
+    const subMse = Math.min(30, Math.max(12, Math.round(Number(mse) + delta * 0.3)));
+    const subEse = Math.min(70, Math.max(28, Math.round(Number(ese) * 0.7 + delta * 0.5)));
+    const total = Math.min(100, Math.round((subIse / 30 * 15) + (subMse / 30 * 15) + subEse));
+
+    let grade = 'P';
+    if (total >= 85) grade = 'O';
+    else if (total >= 75) grade = 'A+';
+    else if (total >= 65) grade = 'A';
+    else if (total >= 55) grade = 'B+';
+    else if (total >= 45) grade = 'B';
+    else if (total >= 40) grade = 'C';
+    else grade = 'F';
+
+    // Subject Attendance Analysis calculation
+    const totalConducted = 36 + (idx % 3) * 2; // e.g. 36, 38, 40 sessions
+    const attDelta = (((student.id * 5 + sem * 3 + idx * 7) % 7) - 3) * 1.5;
+    const subjectAttPct = Math.min(100, Math.max(45, parseFloat((overallAtt + attDelta).toFixed(1))));
+    const totalAttended = Math.round((subjectAttPct / 100) * totalConducted);
+    const isDefaulter = subjectAttPct < 75;
+
+    return {
+      name: subj,
+      code: `AIDS${sem}0${idx + 1}`,
+      subject: subj,
+      ise: subIse,
+      mse: subMse,
+      ese: subEse,
+      internal: subIse,
+      exam: subEse,
+      total,
+      grade,
+      status: total >= 40 ? 'Pass' : 'Backlog',
+      conducted: totalConducted,
+      attended: totalAttended,
+      attendance_pct: subjectAttPct,
+      defaulter: isDefaulter,
+      attendance: {
+        conducted: totalConducted,
+        attended: totalAttended,
+        percentage: subjectAttPct,
+        status: isDefaulter ? 'Below 75% Defaulter' : 'Good Standing',
+        isDefaulter
+      }
+    };
+  });
+};
+
 // GET /api/mentor/students/:id (Strict Batch Isolation Verification across assigned batches)
 const getStudentDetail = async (req, res) => {
   try {
@@ -199,6 +270,22 @@ const getStudentDetail = async (req, res) => {
     const activities = await db.query('SELECT * FROM activities WHERE student_id = ? ORDER BY date_achieved DESC', [student.id]);
     const complaints = await db.query('SELECT * FROM complaints WHERE student_id = ? ORDER BY created_at DESC', [student.id]);
 
+    // Build Semester-Wise Analysis & Subject Breakdown for all semesters
+    const currentSem = student.semester || (academicRecords[0] ? academicRecords[0].semester : 5);
+    const semesterAnalysis = {};
+    
+    // For each record, generate subject-level marks and attendance breakdown
+    for (const ar of academicRecords) {
+      semesterAnalysis[ar.semester] = {
+        semester: ar.semester,
+        cgpa: ar.cgpa,
+        attendance_percentage: ar.attendance_percentage,
+        subjects_failed_count: ar.subjects_failed_count,
+        defaulter_flag: ar.defaulter_flag,
+        subjects: getSemesterSubjectEvaluation(student, ar, ar.semester)
+      };
+    }
+
     // Pull real ML prediction from pipeline output
     const mlPred = getStudentMlPrediction(student.id);
     const mlDemoResult = mlPred ? {
@@ -216,13 +303,108 @@ const getStudentDetail = async (req, res) => {
     return res.status(200).json({
       success: true,
       student,
+      currentSemester: currentSem,
       academicRecords,
+      semesterAnalysis,
       activities,
       complaints,
       mlDemoResult
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Server error fetching student details.' });
+  }
+};
+
+// POST /api/mentor/students/:id/academic (Mentor Adds / Updates Student Attendance & Marks)
+const updateStudentAcademicRecord = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const mentor = await getMentorByUserId(req.user.id);
+    if (!mentor) return res.status(404).json({ success: false, message: 'Mentor not found.' });
+
+    const assignedBatches = await getMentorBatches(mentor.id);
+    const mentorBatchIds = assignedBatches.map(b => b.id);
+
+    const students = await db.query('SELECT * FROM students WHERE id = ? LIMIT 1', [id]);
+    if (students.length === 0) return res.status(404).json({ success: false, message: 'Student not found.' });
+    const student = students[0];
+
+    if (!mentorBatchIds.includes(student.batch_id)) {
+      return res.status(403).json({ success: false, message: 'Forbidden: You cannot modify records for students outside your assigned batch.' });
+    }
+
+    let { semester, attendance_percentage, cgpa, ise_marks, mse_marks, ese_marks, subjects_failed_count, remarks } = req.body;
+
+    const parsedSem = parseInt(semester);
+    if (isNaN(parsedSem) || parsedSem < 1 || parsedSem > 8) {
+      return res.status(400).json({ success: false, message: 'Semester must be between 1 and 8.' });
+    }
+
+    const parsedAtt = parseFloat(attendance_percentage);
+    if (isNaN(parsedAtt) || parsedAtt < 0 || parsedAtt > 100) {
+      return res.status(400).json({ success: false, message: 'Attendance percentage must be between 0 and 100.' });
+    }
+
+    const parsedCgpa = parseFloat(cgpa);
+    if (isNaN(parsedCgpa) || parsedCgpa < 0 || parsedCgpa > 10) {
+      return res.status(400).json({ success: false, message: 'CGPA must be between 0.00 and 10.00.' });
+    }
+
+    const parsedIse = ise_marks !== undefined && ise_marks !== '' ? parseFloat(ise_marks) : 20.0;
+    const parsedMse = mse_marks !== undefined && mse_marks !== '' ? parseFloat(mse_marks) : 25.0;
+    const parsedEse = ese_marks !== undefined && ese_marks !== '' ? parseFloat(ese_marks) : 60.0;
+    const parsedFailed = subjects_failed_count !== undefined && subjects_failed_count !== '' ? parseInt(subjects_failed_count) : 0;
+    const defaulter_flag = (parsedAtt < 75 || parsedFailed > 0) ? 1 : 0;
+
+    // Check if record exists
+    const existing = await db.query(
+      'SELECT id FROM academic_records WHERE student_id = ? AND semester = ? LIMIT 1',
+      [student.id, parsedSem]
+    );
+
+    if (existing.length > 0) {
+      await db.query(`
+        UPDATE academic_records
+        SET attendance_percentage = ?, cgpa = ?, ise_marks = ?, mse_marks = ?, ese_marks = ?, subjects_failed_count = ?, defaulter_flag = ?
+        WHERE id = ?
+      `, [parsedAtt, parsedCgpa, parsedIse, parsedMse, parsedEse, parsedFailed, defaulter_flag, existing[0].id]);
+    } else {
+      await db.query(`
+        INSERT INTO academic_records (student_id, semester, cgpa, attendance_percentage, ise_marks, mse_marks, ese_marks, subjects_failed_count, defaulter_flag)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [student.id, parsedSem, parsedCgpa, parsedAtt, parsedIse, parsedMse, parsedEse, parsedFailed, defaulter_flag]);
+    }
+
+    // Update student ml_risk_level dynamically if this is the current semester
+    if (parsedSem >= (student.semester || 1)) {
+      let newRisk = student.ml_risk_level;
+      if (parsedAtt < 75 || defaulter_flag === 1) {
+        newRisk = 'Weak';
+      } else if (parsedAtt >= 90 && parsedCgpa >= 8.5) {
+        newRisk = 'Bright';
+      } else {
+        newRisk = 'Average';
+      }
+      await db.query('UPDATE students SET ml_risk_level = ? WHERE id = ?', [newRisk, student.id]);
+    }
+
+    // Notify mentee
+    const stUser = await db.query('SELECT user_id FROM students WHERE id = ? LIMIT 1', [student.id]);
+    if (stUser.length > 0) {
+      await db.query(
+        'INSERT INTO notifications (user_id, message) VALUES (?, ?)',
+        [stUser[0].user_id, `Faculty Mentor ${mentor.name} updated your academic & attendance record for Semester ${parsedSem} (Attendance: ${parsedAtt}%, CGPA: ${parsedCgpa}).${remarks ? ' Remarks: ' + remarks : ''}`]
+      );
+    }
+
+    logger.info(`Mentor ${mentor.name} updated academic details for Student ID ${student.id} (Semester ${parsedSem})`);
+    return res.status(200).json({
+      success: true,
+      message: `Academic & attendance details for Semester ${parsedSem} saved successfully.`
+    });
+  } catch (err) {
+    logger.error('Error updating student academic record by mentor:', err);
+    return res.status(500).json({ success: false, message: 'Server error updating student academic record.' });
   }
 };
 
@@ -871,6 +1053,7 @@ module.exports = {
   getMentorDashboard,
   getAssignedStudents,
   getStudentDetail,
+  updateStudentAcademicRecord,
   getMentorStudentReport,
   createMeeting,
   getMeetings,

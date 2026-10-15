@@ -274,7 +274,14 @@ function populateActivitiesView(activities) {
       <td class="px-6 py-4 font-semibold text-slate-900 text-sm">${a.title}</td>
       <td class="px-6 py-4 text-xs font-semibold text-blue-600 uppercase"><span class="px-2 py-0.5 bg-blue-50 border border-blue-100 rounded">${a.category}</span></td>
       <td class="px-6 py-4 text-slate-500 text-xs font-mono">${a.date_achieved ? new Date(a.date_achieved).toLocaleDateString() : ''}</td>
-      <td class="px-6 py-4 text-xs"><a href="#" onclick="alert('Viewing certificate file: ${a.evidence_url || 'certificate.pdf'}'); return false;" class="text-blue-600 underline font-medium">${a.evidence_url || 'certificate.pdf'}</a></td>
+      <td class="px-6 py-4 text-xs font-mono">
+        ${a.evidence_url ? `
+          <a href="${a.evidence_url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline font-medium hover:text-blue-800 inline-flex items-center space-x-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            <span>${a.evidence_url.split('/').pop()}</span>
+          </a>
+        ` : `<span class="text-slate-400 italic">None</span>`}
+      </td>
       <td class="px-6 py-4 text-sm">${getActivityStatusBadge(a.status)}</td>
       <td class="px-6 py-4 text-xs font-mono ${a.status === 'Approved' ? 'text-emerald-700' : (a.status === 'Rejected' ? 'text-rose-600' : 'text-slate-500')}">
         ${a.mentor_remarks || (a.status === 'Approved' ? 'Verified by Mentor' : (a.status === 'Rejected' ? 'Rejected by Mentor' : 'Verification Pending'))}

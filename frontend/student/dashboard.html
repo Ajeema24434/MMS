@@ -571,6 +571,10 @@
                         <option value="Other">Other</option>
                     </select>
                 </div>
+                <div id="act-custom-category-group" class="hidden">
+                    <label class="block text-xs font-semibold text-blue-900 uppercase mb-1">Specify Custom Activity Type / Category *</label>
+                    <input type="text" id="act-custom-category" placeholder="e.g. Hackathon, Coding Contest, Project Exhibition" class="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50/50">
+                </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Date Achieved</label>
                     <input type="date" id="act-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
@@ -580,13 +584,20 @@
                     <textarea id="act-desc" rows="2" placeholder="Brief details about the achievement..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Certificate Evidence Upload (Filename)</label>
-                    <input type="text" id="act-evidence" placeholder="certificate_cloud.pdf" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                        Certificate Evidence File (PDF, PNG, JPEG — Max 25 KB) *
+                    </label>
+                    <input type="file" id="act-file" accept=".pdf, .png, .jpg, .jpeg, application/pdf, image/png, image/jpeg" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-slate-50 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
+                    <div class="flex items-center justify-between text-[11px] mt-1 text-slate-500 font-mono">
+                        <span>Formats: PDF, PNG, JPEG</span>
+                        <span id="act-file-size-indicator">Max Size: 25 KB</span>
+                    </div>
+                    <p id="act-file-error" class="text-xs text-rose-600 font-bold mt-1 hidden"></p>
                 </div>
 
                 <div class="pt-2 flex space-x-2">
                     <button type="button" onclick="closeActivityModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-lg hover:bg-slate-200">Cancel</button>
-                    <button type="submit" class="w-1/2 py-2 bg-blue-600 text-white font-semibold text-sm rounded-lg hover:bg-blue-500">Submit Activity</button>
+                    <button type="submit" id="act-submit-btn" class="w-1/2 py-2 bg-blue-600 text-white font-semibold text-sm rounded-lg hover:bg-blue-500">Submit Activity</button>
                 </div>
             </form>
         </div>
@@ -738,23 +749,109 @@
             }
         });
 
-        // Submit Activity
+        // Category Selection: Toggle Custom Type input when 'Other' is chosen
+        document.getElementById('act-category').addEventListener('change', (e) => {
+            const group = document.getElementById('act-custom-category-group');
+            const input = document.getElementById('act-custom-category');
+            if (e.target.value === 'Other') {
+                group.classList.remove('hidden');
+                input.required = true;
+                input.focus();
+            } else {
+                group.classList.add('hidden');
+                input.required = false;
+                input.value = '';
+            }
+        });
+
+        // Certificate File Selection & 25KB Validation
+        document.getElementById('act-file').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const errEl = document.getElementById('act-file-error');
+            const indEl = document.getElementById('act-file-size-indicator');
+            if (!file) return;
+
+            const sizeKb = (file.size / 1024).toFixed(1);
+            if (file.size > 25 * 1024) {
+                errEl.textContent = `Selected file is ${sizeKb} KB. Maximum allowed size is 25 KB!`;
+                errEl.classList.remove('hidden');
+                e.target.value = '';
+                indEl.textContent = `${sizeKb} KB (Too large!)`;
+                indEl.className = 'text-rose-600 font-bold';
+            } else {
+                errEl.classList.add('hidden');
+                indEl.textContent = `${sizeKb} KB / 25 KB (Valid)`;
+                indEl.className = 'text-emerald-600 font-bold';
+            }
+        });
+
+        // Submit Activity with File Upload & Custom Type
         document.getElementById('activity-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const body = {
-                title: document.getElementById('act-title').value.trim(),
-                category: document.getElementById('act-category').value,
-                date_achieved: document.getElementById('act-date').value,
-                description: document.getElementById('act-desc').value.trim(),
-                evidence_url: document.getElementById('act-evidence').value.trim() || 'certificate.pdf'
-            };
-            const res = await API.post('/student/activities', body);
-            if (res.success) {
-                closeActivityModal();
-                loadStudentDashboardData();
-            } else {
-                alert(res.message || 'Error submitting activity.');
+            const submitBtn = document.getElementById('act-submit-btn');
+            if (submitBtn) submitBtn.disabled = true;
+
+            let category = document.getElementById('act-category').value;
+            if (category === 'Other') {
+                const customVal = document.getElementById('act-custom-category').value.trim();
+                if (!customVal) {
+                    alert('Please specify the custom activity category / type.');
+                    if (submitBtn) submitBtn.disabled = false;
+                    return;
+                }
+                category = customVal;
             }
+
+            const fileInput = document.getElementById('act-file');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a certificate file (PDF, PNG, or JPEG up to 25KB).');
+                if (submitBtn) submitBtn.disabled = false;
+                return;
+            }
+
+            if (file.size > 25 * 1024) {
+                alert(`File size (${(file.size / 1024).toFixed(1)} KB) exceeds the 25 KB limit! Please choose a smaller file.`);
+                if (submitBtn) submitBtn.disabled = false;
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async () => {
+                const body = {
+                    title: document.getElementById('act-title').value.trim(),
+                    category,
+                    date_achieved: document.getElementById('act-date').value,
+                    description: document.getElementById('act-desc').value.trim(),
+                    file_data: reader.result,
+                    file_name: file.name
+                };
+
+                try {
+                    const res = await API.post('/student/activities', body);
+                    if (res.success) {
+                        alert('Activity & Certificate successfully submitted for mentor verification!');
+                        closeActivityModal();
+                        document.getElementById('activity-form').reset();
+                        document.getElementById('act-custom-category-group').classList.add('hidden');
+                        document.getElementById('act-file-size-indicator').textContent = 'Max Size: 25 KB';
+                        document.getElementById('act-file-size-indicator').className = '';
+                        await loadStudentDashboardData();
+                    } else {
+                        alert(res.message || 'Error submitting activity.');
+                    }
+                } catch (err) {
+                    alert('Server error submitting activity.');
+                } finally {
+                    if (submitBtn) submitBtn.disabled = false;
+                }
+            };
+            reader.onerror = () => {
+                alert('Error reading uploaded certificate file.');
+                if (submitBtn) submitBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
         });
 
         // Submit Complaint
