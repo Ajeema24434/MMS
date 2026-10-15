@@ -660,7 +660,8 @@ function renderSubjectBreakdownForSem(sem) {
     const total = s.total !== undefined ? s.total : Math.round(ise * 0.5 + mse * 0.5 + ese);
     const grade = s.grade || (total >= 85 ? 'O' : (total >= 75 ? 'A+' : (total >= 65 ? 'A' : (total >= 50 ? 'B+' : 'B'))));
     const status = s.status || (total >= 40 ? 'Pass' : 'Backlog');
-    return { name, code, conducted, attended, attendance_pct, defaulter, ise, mse, ese, total, grade, status };
+    const remarks = s.remarks || '';
+    return { name, code, conducted, attended, attendance_pct, defaulter, ise, mse, ese, total, grade, status, remarks, credits: s.credits || 4 };
   });
 
   const defaulterCount = subjects.filter(s => s.defaulter || s.attendance_pct < 75).length;
@@ -671,7 +672,7 @@ function renderSubjectBreakdownForSem(sem) {
 
   if (tbody) {
     if (subjects.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-6 text-center text-slate-400">No subject-level evaluation data recorded for Semester ${sem}.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-6 text-center text-slate-400">No subject-level evaluation data recorded for Semester ${sem}.</td></tr>`;
     } else {
       tbody.innerHTML = subjects.map(s => `
         <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
@@ -701,6 +702,11 @@ function renderSubjectBreakdownForSem(sem) {
               ${s.grade}
             </span>
           </td>
+          <td class="px-5 py-3.5 text-right">
+            <button type="button" onclick="openSubjectAttendanceModal('${s.code}', '${s.name.replace(/'/g, "\\'")}', ${s.conducted}, ${s.attended}, ${sem}, '${(s.remarks || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition cursor-pointer">
+              Edit Attendance
+            </button>
+          </td>
         </tr>
       `).join('');
     }
@@ -708,42 +714,189 @@ function renderSubjectBreakdownForSem(sem) {
 
   // Render Visual Charts
   renderMentorCharts(subjects, currentStudentAcademicRecords, sem);
+
+  // Render Subject-Wise Attendance Entry Cards
+  renderSubjectAttendanceEntryCards(subjects, sem);
 }
 
-function openMentorAcademicModal(sem = 5, att = 85.0, cgpa = 8.5, failed = 0, ise = 20, mse = 25, ese = 60) {
-  const modal = document.getElementById('mentor-academic-modal');
+// Render Subject Attendance Entry Form Cards directly below analysis
+function renderSubjectAttendanceEntryCards(subjects, sem) {
+  const container = document.getElementById('subject-attendance-entry-cards');
+  const badge = document.getElementById('subj-att-cur-sem-badge');
+  if (badge) badge.textContent = `Semester ${sem} Subjects`;
+  if (!container) return;
+
+  if (!subjects || subjects.length === 0) {
+    container.innerHTML = `<p class="text-xs text-slate-400 py-4 col-span-3 text-center">No subjects available for Semester ${sem}.</p>`;
+    return;
+  }
+
+  container.innerHTML = subjects.map(s => {
+    const isDef = s.defaulter || s.attendance_pct < 75.0;
+    return `
+      <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3.5 hover:border-indigo-300 transition shadow-sm">
+        <div class="flex items-start justify-between gap-2 border-b border-slate-200 pb-2.5">
+          <div>
+            <h4 class="font-bold text-slate-900 text-sm leading-snug">${s.name}</h4>
+            <span class="font-mono text-[10px] text-slate-400 font-semibold">${s.code} • ${s.credits || 4} Credits</span>
+          </div>
+          <span id="subj-card-badge-${s.code}" class="px-2 py-0.5 rounded text-[10px] font-bold ${s.attendance_pct >= 85 ? 'bg-emerald-100 text-emerald-800' : (s.attendance_pct >= 75 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800')} flex-shrink-0">
+            ${s.attendance_pct}% ${isDef ? '(Defaulter)' : ''}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <label class="block text-[10px] uppercase font-semibold text-slate-500 mb-1">Total Conducted</label>
+            <input type="number" id="subj-card-cond-${s.code}" value="${s.conducted}" min="1" max="100" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg font-mono text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-semibold" oninput="updateCardAttendanceLive('${s.code}')">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase font-semibold text-slate-500 mb-1">Attended Sessions</label>
+            <input type="number" id="subj-card-att-${s.code}" value="${s.attended}" min="0" max="100" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg font-mono text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-semibold" oninput="updateCardAttendanceLive('${s.code}')">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] uppercase font-semibold text-slate-500 mb-1">Observation / Counseling Remarks</label>
+          <input type="text" id="subj-card-rem-${s.code}" value="${(s.remarks || '').replace(/"/g, '&quot;')}" placeholder="e.g. Regular in theory, active in lab" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div class="pt-1">
+          <button type="button" id="subj-card-btn-${s.code}" onclick="saveSingleSubjectAttendance(${sem}, '${s.code}', '${s.name.replace(/'/g, "\\'")}')" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center justify-center space-x-1.5 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <span>Save ${s.code} Attendance</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Live calculation in entry cards
+function updateCardAttendanceLive(code) {
+  const condEl = document.getElementById(`subj-card-cond-${code}`);
+  const attEl = document.getElementById(`subj-card-att-${code}`);
+  const badge = document.getElementById(`subj-card-badge-${code}`);
+  if (!condEl || !attEl || !badge) return;
+
+  const cond = parseInt(condEl.value) || 0;
+  const att = parseInt(attEl.value) || 0;
+  const pct = cond > 0 ? parseFloat(((att / cond) * 100).toFixed(1)) : 0;
+  const isDef = pct < 75.0;
+
+  badge.textContent = `${pct}% ${isDef ? '(Defaulter)' : ''}`;
+  badge.className = `px-2 py-0.5 rounded text-[10px] font-bold flex-shrink-0 ${pct >= 85 ? 'bg-emerald-100 text-emerald-800' : (pct >= 75 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800')}`;
+}
+
+// Save single subject attendance from entry card
+async function saveSingleSubjectAttendance(sem, code, name) {
+  const condEl = document.getElementById(`subj-card-cond-${code}`);
+  const attEl = document.getElementById(`subj-card-att-${code}`);
+  const remEl = document.getElementById(`subj-card-rem-${code}`);
+  const btn = document.getElementById(`subj-card-btn-${code}`);
+
+  const conducted = parseInt(condEl.value);
+  const attended = parseInt(attEl.value);
+  const remarks = remEl ? remEl.value.trim() : '';
+
+  if (isNaN(conducted) || conducted <= 0) {
+    alert('Total conducted sessions must be at least 1.');
+    return;
+  }
+  if (isNaN(attended) || attended < 0 || attended > conducted) {
+    alert('Attended sessions must be between 0 and total conducted sessions.');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span>Saving...</span>`;
+  }
+
+  try {
+    const res = await API.post(`/mentor/students/${currentMenteeStudentId}/subject-attendance`, {
+      semester: sem,
+      subject_code: code,
+      subject_name: name,
+      conducted_sessions: conducted,
+      attended_sessions: attended,
+      remarks: remarks
+    });
+
+    if (res.success) {
+      alert(`Attendance for ${name} (${code}) successfully saved: ${attended}/${conducted} sessions (${res.attendance?.attendance_percentage || ''}%).`);
+      await loadMentorStudentPage();
+    } else {
+      alert(res.message || 'Error saving subject attendance.');
+    }
+  } catch (err) {
+    alert('Server error saving subject attendance.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span>Save ${code} Attendance</span>
+      `;
+    }
+  }
+}
+
+// Subject Attendance Modal
+function openSubjectAttendanceModal(code, name, conducted, attended, sem, remarks = '') {
+  const modal = document.getElementById('subject-attendance-modal');
   if (!modal) return;
 
-  const semSelect = document.getElementById('m-acad-sem');
-  if (semSelect) semSelect.value = sem || 5;
+  const codeEl = document.getElementById('sam-code');
+  const nameEl = document.getElementById('sam-name');
+  const semEl = document.getElementById('sam-sem');
+  const subjDisp = document.getElementById('sam-subj-display');
+  const codeDisp = document.getElementById('sam-code-display');
+  const condEl = document.getElementById('sam-conducted');
+  const attEl = document.getElementById('sam-attended');
+  const remEl = document.getElementById('sam-remarks');
 
-  const attInput = document.getElementById('m-acad-attendance');
-  if (attInput) attInput.value = att !== undefined ? att : 85.0;
+  if (codeEl) codeEl.value = code;
+  if (nameEl) nameEl.value = name;
+  if (semEl) semEl.value = sem || currentSelectedSemester;
+  if (subjDisp) subjDisp.textContent = name;
+  if (codeDisp) codeDisp.textContent = `${code} • Semester ${sem || currentSelectedSemester}`;
+  if (condEl) condEl.value = conducted || 36;
+  if (attEl) attEl.value = attended !== undefined ? attended : 30;
+  if (remEl) remEl.value = remarks || '';
 
-  const cgpaInput = document.getElementById('m-acad-cgpa');
-  if (cgpaInput) cgpaInput.value = cgpa !== undefined ? cgpa : 8.5;
-
-  const failedInput = document.getElementById('m-acad-failed');
-  if (failedInput) failedInput.value = failed !== undefined ? failed : 0;
-
-  const iseInput = document.getElementById('m-acad-ise');
-  if (iseInput) iseInput.value = ise !== undefined ? ise : 20;
-
-  const mseInput = document.getElementById('m-acad-mse');
-  if (mseInput) mseInput.value = mse !== undefined ? mse : 25;
-
-  const eseInput = document.getElementById('m-acad-ese');
-  if (eseInput) eseInput.value = ese !== undefined ? ese : 60;
-
-  const remInput = document.getElementById('m-acad-remarks');
-  if (remInput) remInput.value = '';
+  updateModalAttendanceLive();
 
   modal.classList.remove('hidden');
 }
 
-function closeMentorAcademicModal() {
-  const modal = document.getElementById('mentor-academic-modal');
+function closeSubjectAttendanceModal() {
+  const modal = document.getElementById('subject-attendance-modal');
   if (modal) modal.classList.add('hidden');
+}
+
+function updateModalAttendanceLive() {
+  const condEl = document.getElementById('sam-conducted');
+  const attEl = document.getElementById('sam-attended');
+  const preview = document.getElementById('sam-pct-preview');
+  const badge = document.getElementById('sam-status-badge');
+  if (!condEl || !attEl || !preview || !badge) return;
+
+  const cond = parseInt(condEl.value) || 0;
+  const att = parseInt(attEl.value) || 0;
+  const pct = cond > 0 ? parseFloat(((att / cond) * 100).toFixed(1)) : 0;
+  preview.textContent = `${pct}% (${att}/${cond} sessions)`;
+
+  if (pct >= 85) {
+    badge.textContent = 'Eligible (High)';
+    badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800';
+  } else if (pct >= 75) {
+    badge.textContent = 'Eligible (Normal)';
+    badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800';
+  } else {
+    badge.textContent = 'Defaulter Alert (<75%)';
+    badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800';
+  }
 }
 
 async function loadMentorStudentPage() {
@@ -801,76 +954,7 @@ async function loadMentorStudentPage() {
     confEl.textContent = `Confidence: ${confVal}% (${mlDemoResult?.support_priority || 'Standard'} Priority)`;
   }
 
-  // 1. Semester Progression KPI Bar (Current Semester Attendance shown, no historical attendance)
-  const totalBacklogs = (academicRecords || []).reduce((acc, ar) => acc + (parseInt(ar.subjects_failed_count) || 0), 0);
-  const currentSemRecord = (academicRecords || []).find(ar => ar.semester === currentSelectedSemester) || academicRecords[0];
-  const curAtt = currentSemRecord?.attendance_percentage !== undefined ? `${currentSemRecord.attendance_percentage}%` : '85.0%';
-  const validCgpas = (academicRecords || []).filter(ar => ar.cgpa && !isNaN(parseFloat(ar.cgpa)));
-  const latestCgpa = validCgpas.length > 0 ? parseFloat(validCgpas[0].cgpa).toFixed(2) : '--';
-  const hasDefaulter = (currentSemRecord && parseFloat(currentSemRecord.attendance_percentage) < 75) || currentSemRecord?.defaulter_flag;
-
-  setName('prog-cgpa', latestCgpa);
-  setName('prog-attendance', curAtt);
-  
-  const backlogsEl = document.getElementById('prog-backlogs');
-  if (backlogsEl) {
-    if (totalBacklogs > 0) {
-      backlogsEl.textContent = `${totalBacklogs} Backlog${totalBacklogs > 1 ? 's' : ''}`;
-      backlogsEl.className = 'text-lg font-black text-rose-600 font-mono';
-    } else {
-      backlogsEl.textContent = '0 Clear';
-      backlogsEl.className = 'text-lg font-black text-emerald-600 font-mono';
-    }
-  }
-
-  const compEl = document.getElementById('prog-compliance');
-  if (compEl) {
-    if (hasDefaulter) {
-      compEl.textContent = 'Defaulter Alert (<75%)';
-      compEl.className = 'text-xs font-bold text-rose-700 block mt-1';
-    } else {
-      compEl.textContent = 'Good Standing (Eligible)';
-      compEl.className = 'text-xs font-bold text-emerald-700 block mt-1';
-    }
-  }
-
-  // 2. Populate Semester-Wise Academic Records Table (WITHOUT Attendance % column as requested)
-  const academicTbody = document.getElementById('st-academic-tbody');
-  if (academicTbody) {
-    if (!academicRecords || academicRecords.length === 0) {
-      academicTbody.innerHTML = `<tr><td colspan="6" class="px-6 py-6 text-center text-slate-400 text-xs">No academic semester records found. Click "+ Add / Update Attendance & Marks" above.</td></tr>`;
-    } else {
-      academicTbody.innerHTML = academicRecords.map(ar => {
-        const isCurrent = (ar.semester === currentSemester) || (ar.semester === student.semester);
-        const isDefaulter = ar.defaulter_flag || ar.subjects_failed_count > 0;
-        return `
-          <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-            <td class="px-6 py-4 font-bold text-slate-800 text-sm">
-              Semester ${ar.semester}
-              ${isCurrent ? '<span class="ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200 uppercase">Current</span>' : ''}
-            </td>
-            <td class="px-6 py-4 font-mono text-slate-900 text-sm font-bold">${ar.cgpa ? Number(ar.cgpa).toFixed(2) : '--'}</td>
-            <td class="px-6 py-4 font-mono text-slate-600 text-xs">ISE: ${ar.ise_marks || '--'} | MSE: ${ar.mse_marks || '--'} | ESE: ${ar.ese_marks || '--'}</td>
-            <td class="px-6 py-4 font-mono text-xs font-semibold ${ar.subjects_failed_count > 0 ? 'text-rose-600' : 'text-slate-700'}">
-              ${ar.subjects_failed_count > 0 ? `${ar.subjects_failed_count} Backlog(s)` : '0'}
-            </td>
-            <td class="px-6 py-4 text-xs font-bold">
-              ${isDefaulter 
-                ? '<span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">Attention Required</span>' 
-                : '<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">All Clear</span>'}
-            </td>
-            <td class="px-6 py-4 text-right">
-              <button onclick="openMentorAcademicModal(${ar.semester}, ${ar.attendance_percentage || 85.0}, ${ar.cgpa || 8.0}, ${ar.subjects_failed_count || 0}, ${ar.ise_marks || 20}, ${ar.mse_marks || 25}, ${ar.ese_marks || 60})" class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded border border-indigo-200 transition cursor-pointer">
-                Edit
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-  }
-
-  // 3. Render Interactive Semester Selector Tabs & Subject Breakdown
+  // 1. Render Interactive Semester Selector Tabs & Subject Breakdown
   const semTabsContainer = document.getElementById('sem-tabs-container');
   const semKeys = Object.keys(currentStudentAcademicAnalysis).map(Number).sort((a, b) => b - a);
   const activeSem = semKeys.includes(currentSelectedSemester) ? currentSelectedSemester : (semKeys[0] || 5);
@@ -976,49 +1060,61 @@ async function loadMentorStudentPage() {
     }
   }
 
-  // 5. Ensure mentor-academic-form listener is attached
-  const acadForm = document.getElementById('mentor-academic-form');
-  if (acadForm && !acadForm.dataset.listenerAttached) {
-    acadForm.dataset.listenerAttached = 'true';
-    acadForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const sem = document.getElementById('m-acad-sem').value;
-      const att = document.getElementById('m-acad-attendance').value;
-      const cgpa = document.getElementById('m-acad-cgpa').value;
-      const failed = document.getElementById('m-acad-failed').value;
-      const ise = document.getElementById('m-acad-ise').value;
-      const mse = document.getElementById('m-acad-mse').value;
-      const ese = document.getElementById('m-acad-ese').value;
-      const remarks = document.getElementById('m-acad-remarks').value.trim();
+  // 2. Ensure subject-attendance-modal-form listener is attached
+  const samForm = document.getElementById('subject-attendance-modal-form');
+  if (samForm && !samForm.dataset.listenerAttached) {
+    samForm.dataset.listenerAttached = 'true';
+    
+    // Live calculation listeners for modal
+    const samCond = document.getElementById('sam-conducted');
+    const samAtt = document.getElementById('sam-attended');
+    if (samCond) samCond.addEventListener('input', updateModalAttendanceLive);
+    if (samAtt) samAtt.addEventListener('input', updateModalAttendanceLive);
 
-      const submitBtn = document.getElementById('m-acad-save-btn');
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Saving Record...';
+    samForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const code = document.getElementById('sam-code').value;
+      const name = document.getElementById('sam-name').value;
+      const sem = document.getElementById('sam-sem').value;
+      const conducted = parseInt(document.getElementById('sam-conducted').value);
+      const attended = parseInt(document.getElementById('sam-attended').value);
+      const remarks = document.getElementById('sam-remarks').value.trim();
+
+      if (isNaN(conducted) || conducted <= 0) {
+        alert('Conducted sessions must be at least 1.');
+        return;
+      }
+      if (isNaN(attended) || attended < 0 || attended > conducted) {
+        alert('Attended sessions must be between 0 and conducted sessions.');
+        return;
       }
 
-      const res = await API.post(`/mentor/students/${studentId}/academic`, {
+      const submitBtn = document.getElementById('sam-save-btn');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving Attendance...';
+      }
+
+      const res = await API.post(`/mentor/students/${studentId}/subject-attendance`, {
         semester: sem,
-        attendance_percentage: att,
-        cgpa,
-        subjects_failed_count: failed,
-        ise_marks: ise,
-        mse_marks: mse,
-        ese_marks: ese,
-        remarks
+        subject_code: code,
+        subject_name: name,
+        conducted_sessions: conducted,
+        attended_sessions: attended,
+        remarks: remarks
       });
 
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Save Attendance & Marks';
+        submitBtn.textContent = 'Save Subject Attendance';
       }
 
       if (res.success) {
-        closeMentorAcademicModal();
-        alert('Mentee attendance and academic record updated successfully!');
+        closeSubjectAttendanceModal();
+        alert(`Subject attendance for ${name} (${code}) successfully saved!`);
         await loadMentorStudentPage();
       } else {
-        alert(res.message || 'Error updating academic record.');
+        alert(res.message || 'Error updating subject attendance.');
       }
     });
   }

@@ -91,61 +91,6 @@
                 </div>
             </div>
 
-            <!-- 2. Semester-Wise Academic Progression & Attendance Analysis -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div>
-                        <h3 class="font-bold text-slate-900 text-base">Academic Progression (Semester-Wise Records)</h3>
-                        <p class="text-xs text-slate-500">Official semester performance records and overall attendance trends</p>
-                    </div>
-                    <button type="button" onclick="openMentorAcademicModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow transition flex items-center space-x-1.5">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        <span>+ Add / Update Attendance & Marks</span>
-                    </button>
-                </div>
-
-                <!-- Semester Progression Summary Bar -->
-                <div class="p-4 bg-slate-50/70 border-b border-slate-200 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
-                    <div class="p-3 bg-white rounded-xl border border-slate-200">
-                        <span class="text-slate-500 text-[10px] uppercase font-semibold block">Cumulative CGPA</span>
-                        <strong id="prog-cgpa" class="text-lg font-black text-indigo-600 font-mono">--</strong>
-                    </div>
-                    <div class="p-3 bg-white rounded-xl border border-slate-200">
-                        <span class="text-slate-500 text-[10px] uppercase font-semibold block">Current Sem Attendance</span>
-                        <strong id="prog-attendance" class="text-lg font-black text-slate-800 font-mono">--</strong>
-                    </div>
-                    <div class="p-3 bg-white rounded-xl border border-slate-200">
-                        <span class="text-slate-500 text-[10px] uppercase font-semibold block">Total Backlogs</span>
-                        <strong id="prog-backlogs" class="text-lg font-black text-emerald-600 font-mono">0 Clear</strong>
-                    </div>
-                    <div class="p-3 bg-white rounded-xl border border-slate-200">
-                        <span class="text-slate-500 text-[10px] uppercase font-semibold block">Threshold Compliance</span>
-                        <strong id="prog-compliance" class="text-xs font-bold text-emerald-700 block mt-1">Good Standing</strong>
-                    </div>
-                </div>
-
-                <!-- Semester History Table (Without semester-wise attendance) -->
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50 text-slate-500 uppercase text-[10px] font-semibold border-b border-slate-200">
-                                <th class="px-6 py-3">Semester</th>
-                                <th class="px-6 py-3">CGPA / SGPA</th>
-                                <th class="px-6 py-3">ISE / MSE / ESE Marks</th>
-                                <th class="px-6 py-3">Backlogs</th>
-                                <th class="px-6 py-3">Status</th>
-                                <th class="px-6 py-3 text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="st-academic-tbody">
-                            <tr>
-                                <td colspan="6" class="px-6 py-6 text-center text-slate-400 text-xs">Loading academic records...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
             <!-- Academic & Attendance Visual Analytics (Charts) -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Chart 1: Current Semester Subject-Wise Attendance Analysis -->
@@ -177,7 +122,7 @@
                 </div>
             </div>
 
-            <!-- 3. Current Semester Subject-Wise Marks & Attendance Analysis -->
+            <!-- 2. Current Semester Subject-Wise Marks & Attendance Analysis -->
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-6">
                 <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
                     <div>
@@ -222,14 +167,34 @@
                                 <th class="px-5 py-3.5">ESE Exam (70)</th>
                                 <th class="px-5 py-3.5">Total (100)</th>
                                 <th class="px-5 py-3.5">Grade</th>
+                                <th class="px-5 py-3.5 text-right">Attendance Action</th>
                             </tr>
                         </thead>
                         <tbody id="sub-breakdown-tbody">
                             <tr>
-                                <td colspan="7" class="px-5 py-6 text-center text-slate-400">Loading subject breakdown...</td>
+                                <td colspan="8" class="px-5 py-6 text-center text-slate-400">Loading subject breakdown...</td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- 3. Add / Update Current Semester Subject-Wise Attendance -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-4" id="subject-attendance-update-section">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                            <span>Add / Update Current Semester Subject Attendance</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Enter or revise conducted sessions and attended sessions for each subject individually in current semester</p>
+                    </div>
+                    <span id="subj-att-cur-sem-badge" class="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 uppercase tracking-wide">Current Semester Subjects</span>
+                </div>
+
+                <!-- Subject-Wise Entry Grid -->
+                <div id="subject-attendance-entry-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Populated dynamically via JS -->
                 </div>
             </div>
 
@@ -292,75 +257,56 @@
         </div>
     </div>
 
-    <!-- Modal 2: Mentor Add / Update Student Attendance & Academic Performance -->
-    <div id="mentor-academic-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
+    <!-- Modal 2: Add / Update Subject Attendance Modal -->
+    <div id="subject-attendance-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fade-in">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
-                    <h3 class="font-bold text-slate-900 text-lg" id="mentor-acad-modal-title">Update Student Attendance & Academic Marks</h3>
-                    <p class="text-xs text-slate-500">Add or revise mentee semester attendance percentage and CIE scores</p>
+                    <h3 class="font-bold text-slate-900 text-base" id="sam-title">Update Subject Attendance</h3>
+                    <p class="text-xs text-slate-500" id="sam-subtitle">Manage subject sessions & percentage</p>
                 </div>
-                <button onclick="closeMentorAcademicModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold leading-none p-1">&times;</button>
+                <button type="button" onclick="closeSubjectAttendanceModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold leading-none p-1">&times;</button>
             </div>
 
-            <form id="mentor-academic-form" class="space-y-4 text-xs">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form id="subject-attendance-modal-form" class="space-y-4 text-xs">
+                <input type="hidden" id="sam-code">
+                <input type="hidden" id="sam-name">
+                <input type="hidden" id="sam-sem">
+
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                    <span class="text-[10px] uppercase text-slate-500 font-bold">Selected Subject</span>
+                    <div id="sam-subj-display" class="font-bold text-slate-900 text-sm">Subject Name</div>
+                    <div id="sam-code-display" class="text-slate-500 font-mono text-xs">CODE</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Select Semester *</label>
-                        <select id="m-acad-sem" required class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
-                            <option value="1">Semester 1 (FY Sem I)</option>
-                            <option value="2">Semester 2 (FY Sem II)</option>
-                            <option value="3">Semester 3 (SY Sem III)</option>
-                            <option value="4">Semester 4 (SY Sem IV)</option>
-                            <option value="5" selected>Semester 5 (TY Sem V)</option>
-                            <option value="6">Semester 6 (TY Sem VI)</option>
-                            <option value="7">Semester 7 (BTech Sem VII)</option>
-                            <option value="8">Semester 8 (BTech Sem VIII)</option>
-                        </select>
+                        <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Conducted Sessions *</label>
+                        <input type="number" id="sam-conducted" min="1" max="100" required class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm font-semibold">
                     </div>
                     <div>
-                        <label class="block font-semibold text-indigo-900 uppercase text-[10px] mb-1">Attendance % (0.0 – 100.0) *</label>
-                        <input type="number" id="m-acad-attendance" step="0.1" min="0" max="100" required placeholder="e.g. 88.5" class="w-full px-3 py-2 border border-indigo-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono font-bold text-indigo-900 bg-indigo-50/30">
+                        <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Attended Sessions *</label>
+                        <input type="number" id="sam-attended" min="0" max="100" required class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm font-semibold">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Live Calculated Preview -->
+                <div class="p-3 bg-indigo-50/60 rounded-xl border border-indigo-100 flex items-center justify-between">
                     <div>
-                        <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">CGPA / SGPA (0.00 – 10.00) *</label>
-                        <input type="number" id="m-acad-cgpa" step="0.01" min="0" max="10" required placeholder="e.g. 8.45" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono font-medium">
+                        <span class="text-[10px] uppercase font-bold text-indigo-900 block">Attendance Percentage</span>
+                        <div id="sam-pct-preview" class="text-lg font-black text-indigo-700 font-mono">0.0%</div>
                     </div>
-                    <div>
-                        <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Subjects Failed / Backlogs Count</label>
-                        <input type="number" id="m-acad-failed" min="0" max="10" value="0" placeholder="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono font-medium">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block font-semibold text-slate-500 uppercase text-[10px] mb-1.5">Exam Component Scores (Continuous Evaluation)</label>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <span class="block text-[10px] text-slate-500">ISE (/30)</span>
-                            <input type="number" id="m-acad-ise" step="0.5" min="0" max="30" placeholder="e.g. 20" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs">
-                        </div>
-                        <div>
-                            <span class="block text-[10px] text-slate-500">MSE (/30)</span>
-                            <input type="number" id="m-acad-mse" step="0.5" min="0" max="30" placeholder="e.g. 26" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs">
-                        </div>
-                        <div>
-                            <span class="block text-[10px] text-slate-500">ESE (/100)</span>
-                            <input type="number" id="m-acad-ese" step="0.5" min="0" max="100" placeholder="e.g. 64" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-xs">
-                        </div>
-                    </div>
+                    <span id="sam-status-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Normal</span>
                 </div>
 
                 <div>
-                    <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Mentor Observation / Attendance Counseling Remarks</label>
-                    <input type="text" id="m-acad-remarks" placeholder="e.g. Regular in practicals; advised on theoretical concepts" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                    <label class="block font-semibold text-slate-700 uppercase text-[10px] mb-1">Attendance Remarks / Counseling Note</label>
+                    <input type="text" id="sam-remarks" placeholder="e.g. Regular in theory, missed 2 practical sessions" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
 
-                <div class="pt-3 flex space-x-3 border-t border-slate-100">
-                    <button type="button" onclick="closeMentorAcademicModal()" class="w-1/2 py-2.5 bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg hover:bg-slate-200 transition">Cancel</button>
-                    <button type="submit" id="m-acad-save-btn" class="w-1/2 py-2.5 bg-indigo-600 text-white font-semibold text-xs rounded-lg hover:bg-indigo-500 shadow transition">Save Attendance & Marks</button>
+                <div class="pt-2 flex space-x-3 border-t border-slate-100">
+                    <button type="button" onclick="closeSubjectAttendanceModal()" class="w-1/2 py-2.5 bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg hover:bg-slate-200 transition">Cancel</button>
+                    <button type="submit" id="sam-save-btn" class="w-1/2 py-2.5 bg-indigo-600 text-white font-semibold text-xs rounded-lg hover:bg-indigo-500 shadow transition">Save Subject Attendance</button>
                 </div>
             </form>
         </div>

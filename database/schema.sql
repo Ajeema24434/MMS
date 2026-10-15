@@ -174,3 +174,20 @@ CREATE TABLE notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 12. Student Subject Attendance Table (Current Semester Subject-Wise Attendance)
+CREATE TABLE student_subject_attendance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT NOT NULL,
+    semester INT NOT NULL DEFAULT 5,
+    subject_code VARCHAR(50) NOT NULL,
+    subject_name VARCHAR(150) NOT NULL,
+    conducted_sessions INT NOT NULL DEFAULT 36,
+    attended_sessions INT NOT NULL DEFAULT 30,
+    attendance_percentage DECIMAL(5,2) NOT NULL DEFAULT 83.33,
+    remarks VARCHAR(255) NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_student_sem_subject (student_id, semester, subject_code),
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

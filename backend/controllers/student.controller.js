@@ -50,9 +50,14 @@ const getStudentDashboard = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Student profile not found.' });
     }
 
-    // Academic records
+    // Academic records & Subject Attendance
     const academicRecords = await db.query(
       'SELECT * FROM academic_records WHERE student_id = ? ORDER BY semester DESC',
+      [student.id]
+    );
+
+    const subjectAttendances = await db.query(
+      'SELECT * FROM student_subject_attendance WHERE student_id = ?',
       [student.id]
     );
 
@@ -66,7 +71,16 @@ const getStudentDashboard = async (req, res) => {
     };
 
     // Unified Dynamic Subject breakdown and attendance analysis matching mentor mentee profile
-    const subjectMarks = getSemesterSubjectEvaluation(student, latestAcademic, currentSem);
+    const subjectMarks = getSemesterSubjectEvaluation(student, latestAcademic, currentSem, subjectAttendances);
+
+    // Synchronize overall attendance percentage from subjects
+    if (subjectMarks && subjectMarks.length > 0) {
+      const totAtt = subjectMarks.reduce((acc, s) => acc + s.attended, 0);
+      const totCond = subjectMarks.reduce((acc, s) => acc + s.conducted, 0);
+      if (totCond > 0) {
+        latestAcademic.attendance_percentage = parseFloat(((totAtt / totCond) * 100).toFixed(1));
+      }
+    }
 
     // Meetings
     const meetings = student.batch_id ? await db.query(

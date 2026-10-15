@@ -1,5 +1,5 @@
 -- Mentor-Mentee System Complete Seed Data
--- Generated on 2026-10-15T02:07:44.774Z
+-- Generated on 2026-10-15T02:18:32.683Z
 
 PRAGMA foreign_keys = OFF;
 
@@ -1170,7 +1170,7 @@ INSERT INTO academic_records (id, student_id, semester, cgpa, attendance_percent
 INSERT INTO academic_records (id, student_id, semester, cgpa, attendance_percentage, ise_marks, mse_marks, ese_marks, subjects_failed_count, defaulter_flag) VALUES (340, 340, 5, 7.79, 86, 16.1, 19.4, 49.5, 0, 0);
 INSERT INTO academic_records (id, student_id, semester, cgpa, attendance_percentage, ise_marks, mse_marks, ese_marks, subjects_failed_count, defaulter_flag) VALUES (341, 341, 5, 7.84, 89, 17.6, 21.4, 55.4, 0, 0);
 INSERT INTO academic_records (id, student_id, semester, cgpa, attendance_percentage, ise_marks, mse_marks, ese_marks, subjects_failed_count, defaulter_flag) VALUES (342, 342, 5, 9.32, 84, 19.5, 25.8, 59.6, 0, 0);
-INSERT INTO academic_records (id, student_id, semester, cgpa, attendance_percentage, ise_marks, mse_marks, ese_marks, subjects_failed_count, defaulter_flag) VALUES (343, 343, 5, 9.25, 95.5, 28.5, 29, 67, 0, 0);
+INSERT INTO academic_records (id, student_id, semester, cgpa, attendance_percentage, ise_marks, mse_marks, ese_marks, subjects_failed_count, defaulter_flag) VALUES (343, 343, 5, 9.25, 78.4, 28.5, 29, 67, 0, 0);
 INSERT INTO academic_records (id, student_id, semester, cgpa, attendance_percentage, ise_marks, mse_marks, ese_marks, subjects_failed_count, defaulter_flag) VALUES (344, 344, 5, 7.78, 86, 16.3, 21.7, 48.9, 0, 0);
 INSERT INTO academic_records (id, student_id, semester, cgpa, attendance_percentage, ise_marks, mse_marks, ese_marks, subjects_failed_count, defaulter_flag) VALUES (345, 345, 5, 7.3, 88, 14.1, 19.8, 51.5, 0, 0);
 INSERT INTO academic_records (id, student_id, semester, cgpa, attendance_percentage, ise_marks, mse_marks, ese_marks, subjects_failed_count, defaulter_flag) VALUES (346, 346, 5, 9.37, 81, 18.2, 27.2, 63.5, 0, 0);
@@ -6445,5 +6445,7 @@ INSERT INTO notifications (id, user_id, message, is_read, created_at) VALUES (13
 INSERT INTO notifications (id, user_id, message, is_read, created_at) VALUES (1330, 17, 'Mentee Ajeema Mahamadali Jamadar (1024091047) submitted a new certificate for verification: "State Level AI Hackathon Runner-up" (Robotics & AI Innovation).', 0, '2026-10-15 01:50:49');
 INSERT INTO notifications (id, user_id, message, is_read, created_at) VALUES (1331, 365, 'Your certificate / activity "State Level AI Hackathon Runner-up" (Robotics & AI Innovation) was Approved by Faculty Mentor Prof. Priyanka C Patil. Remarks: Verified original certificate copy', 0, '2026-10-15 01:50:49');
 INSERT INTO notifications (id, user_id, message, is_read, created_at) VALUES (1332, 365, 'Faculty Mentor Prof. Priyanka C Patil updated your academic & attendance record for Semester 5 (Attendance: 95.5%, CGPA: 9.25). Remarks: Consistent high attendance and performance in Sem 5', 0, '2026-10-15 01:50:49');
+INSERT INTO notifications (id, user_id, message, is_read, created_at) VALUES (1333, 365, 'Faculty Mentor Prof. Priyanka C Patil updated your attendance for Machine Learning: 34/36 sessions (94.4%).', 0, '2026-10-15 02:18:24');
+INSERT INTO notifications (id, user_id, message, is_read, created_at) VALUES (1334, 365, 'Faculty Mentor Prof. Priyanka C Patil updated your attendance for Theory of Computation & Automata: 24/38 sessions (63.2%).', 0, '2026-10-15 02:18:24');
 
 PRAGMA foreign_keys = ON;

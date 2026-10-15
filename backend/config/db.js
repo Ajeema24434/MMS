@@ -82,6 +82,24 @@ async function initDB() {
         logger.error('Error seeding SQLite database:', seedErr.message);
       }
     }
+
+    try {
+      sqliteDb.exec(`
+        CREATE TABLE IF NOT EXISTS student_subject_attendance (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          student_id INTEGER NOT NULL,
+          semester INTEGER NOT NULL DEFAULT 5,
+          subject_code TEXT NOT NULL,
+          subject_name TEXT NOT NULL,
+          conducted_sessions INTEGER NOT NULL DEFAULT 36,
+          attended_sessions INTEGER NOT NULL DEFAULT 30,
+          attendance_percentage REAL NOT NULL DEFAULT 83.33,
+          remarks TEXT,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(student_id, semester, subject_code)
+        );
+      `);
+    } catch (_) {}
   }
 }
 

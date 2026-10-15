@@ -60,7 +60,7 @@ const subjectsBySemester = {
   ]
 };
 
-const getSemesterSubjectEvaluation = (student, academicRecord, targetSemester) => {
+const getSemesterSubjectEvaluation = (student, academicRecord, targetSemester, storedSubjectAttendance = []) => {
   const sem = parseInt(targetSemester) || (student?.semester ? parseInt(student.semester) : 5);
   const subjects = subjectsBySemester[sem] || subjectsBySemester[5];
 
@@ -75,10 +75,31 @@ const getSemesterSubjectEvaluation = (student, academicRecord, targetSemester) =
   const sid = student?.id || 1;
 
   return subjects.map((subjObj, idx) => {
-    // Deterministic student-specific variance
-    const delta = (((sid * 7 + sem * 13 + idx * 11) % 9) - 4);
-    
+    // Check if custom attendance was saved in DB for this student & subject in this semester
+    const stored = (storedSubjectAttendance || []).find(
+      sa => (sa.subject_code === subjObj.code || sa.subject_name === subjObj.name) && parseInt(sa.semester) === sem
+    );
+
+    let totalConducted, totalAttended, subjectAttPct, remarks;
+    if (stored) {
+      totalConducted = parseInt(stored.conducted_sessions) || 36;
+      totalAttended = parseInt(stored.attended_sessions) || 0;
+      subjectAttPct = stored.attendance_percentage !== undefined 
+        ? parseFloat(stored.attendance_percentage) 
+        : (totalConducted > 0 ? parseFloat(((totalAttended / totalConducted) * 100).toFixed(1)) : 0);
+      remarks = stored.remarks || '';
+    } else {
+      totalConducted = 36 + (idx % 3) * 2; // 36, 38, or 40 sessions
+      const attDelta = (((sid * 5 + sem * 3 + idx * 7) % 7) - 3) * 1.5;
+      subjectAttPct = Math.min(100, Math.max(45, parseFloat((overallAtt + attDelta).toFixed(1))));
+      totalAttended = Math.round((subjectAttPct / 100) * totalConducted);
+      remarks = '';
+    }
+
+    const isDefaulter = subjectAttPct < 75.0;
+
     // Component Marks calculation
+    const delta = (((sid * 7 + sem * 13 + idx * 11) % 9) - 4);
     const subIse = Math.min(30, Math.max(12, Math.round(iseBase + delta * 0.4)));
     const subMse = Math.min(30, Math.max(12, Math.round(mseBase + delta * 0.3)));
     const subEse = Math.min(70, Math.max(28, Math.round((eseBase / 100 * 70) + delta * 0.5)));
@@ -92,13 +113,6 @@ const getSemesterSubjectEvaluation = (student, academicRecord, targetSemester) =
     else if (total >= 45) grade = 'B';
     else if (total >= 40) grade = 'C';
     else grade = 'F';
-
-    // Subject-Wise Attendance Analysis
-    const totalConducted = 36 + (idx % 3) * 2; // 36, 38, or 40 sessions
-    const attDelta = (((sid * 5 + sem * 3 + idx * 7) % 7) - 3) * 1.5;
-    const subjectAttPct = Math.min(100, Math.max(45, parseFloat((overallAtt + attDelta).toFixed(1))));
-    const totalAttended = Math.round((subjectAttPct / 100) * totalConducted);
-    const isDefaulter = subjectAttPct < 75.0;
 
     return {
       name: subjObj.name,
@@ -117,6 +131,7 @@ const getSemesterSubjectEvaluation = (student, academicRecord, targetSemester) =
       attended: totalAttended,
       attendance_pct: subjectAttPct,
       defaulter: isDefaulter,
+      remarks: remarks,
       attendance: {
         conducted: totalConducted,
         attended: totalAttended,
