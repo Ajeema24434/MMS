@@ -1,10 +1,14 @@
-MENTOR INSIGHT — LOGISTIC REGRESSION CLASSIFICATION REPORT
-============================================================
-Dataset: mentor_insight_student_risk_synthetic.csv (600 rows)
-Test Set Size: 120 samples (20% stratified)
-Model: Scikit-learn Pipeline [SimpleImputer -> StandardScaler -> LogisticRegression]
-============================================================
+MENTOR INSIGHT â€” LOGISTIC REGRESSION CLASSIFICATION REPORT
+======================================================================
+Dataset File        : mentor_insight_student_risk_synthetic.csv
+Dataset Shape       : 600 rows x 17 columns
+Training Samples    : 480 (80.00%)
+Testing Samples     : 120 (20.00%)
+Model Pipeline      : SimpleImputer(median) -> StandardScaler -> LogisticRegression
+Random State        : 42 (Stratified Split & Logistic Regression)
+======================================================================
 
+CLASSIFICATION REPORT:
               precision    recall  f1-score   support
 
         Weak     0.8462    0.9167    0.8800        36
@@ -15,4 +19,44 @@ Model: Scikit-learn Pipeline [SimpleImputer -> StandardScaler -> LogisticRegress
    macro avg     0.8003    0.8064    0.8026       120
 weighted avg     0.7976    0.8000    0.7980       120
 
-Multiclass ROC-AUC (OVR Macro): 0.9292
+
+OVERALL EVALUATION METRICS:
+Accuracy            : 0.8000 (80.00%)
+Balanced Accuracy   : 0.8064 (80.64%)
+Macro Precision     : 0.8003 (80.03%)
+Weighted Precision  : 0.7976 (79.76%)
+Macro Recall        : 0.8064 (80.64%)
+Weighted Recall     : 0.8000 (80.00%)
+Macro F1-Score      : 0.8026 (80.26%)
+Weighted F1-Score   : 0.7980 (79.80%)
+Multiclass ROC-AUC  : 0.9292 (92.92%)
+Correct Predictions : 96 (80.00%)
+Incorrect Prediction: 24 (20.00%)
+
+CONFUSION MATRIX (Actual Rows vs Predicted Columns):
+  Actual \ Predicted     |    Pred: Weak    |  Pred: Average   |   Pred: Bright   |   Total Actual  
+  Actual: Weak           |        33        |        3         |        0         |        36       
+  Actual: Average        |        5         |        30        |        8         |        43       
+  Actual: Bright         |        1         |        7         |        33        |        41       
+  Total Predicted        |        39        |        40        |        41        |       120       
+
+INTERPRETATION:
+1. Overall Accuracy & Balance:
+   - The Logistic Regression model achieved an overall accuracy of 80.00% and balanced accuracy of 80.64% across the 3 risk tiers.
+   - Correctly classified 96 out of 120 held-out test students (only 24 errors).
+
+2. Priority 'Weak' Risk Tier Detection (Mentoring Safety):
+   - Weak class Recall is 91.67% (33/36 students identified).
+   - Critical False Negatives: Exactly 0 Weak students were misclassified as Bright (0.00%).
+   - In an academic mentoring triage system, high sensitivity on 'Weak' students ensures
+     that struggling students are actively flagged for faculty intervention rather than slipping through.
+
+3. Class Discrimination & ROC-AUC:
+   - Multiclass ROC-AUC is 0.9292 (92.92%), indicating outstanding separability across predicted class probabilities.
+   - Most errors occurred between adjacent classes ('Weak' <-> 'Average' and 'Average' <-> 'Bright'),
+     which represent borderline transition zones naturally resolved via mentor interview sessions.
+
+4. Interpretability & Compliance:
+   - Logistic Regression provides transparent, explainable log-odds feature coefficients without black-box risk,
+     making it compliant with academic audit and Viva requirements.
+

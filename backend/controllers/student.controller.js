@@ -216,8 +216,18 @@ const getStudentAcademic = async (req, res) => {
     if (!student) return res.status(404).json({ success: false, message: 'Student record not found.' });
 
     const records = await db.query('SELECT * FROM academic_records WHERE student_id = ? ORDER BY semester DESC', [student.id]);
+    const subjectAttendances = await db.query('SELECT * FROM student_subject_attendance WHERE student_id = ?', [student.id]);
 
-    const subjectMarks = getStudentSubjectMarks(student, records[0]);
+    const currentSem = student.semester || (records[0] ? records[0].semester : 5);
+    const latestAcademic = records.find(ar => ar.semester === currentSem) || records[0] || {
+      attendance_percentage: 85.0,
+      cgpa: 8.0,
+      ise_marks: 20.0,
+      mse_marks: 25.0,
+      ese_marks: 60.0
+    };
+
+    const subjectMarks = getSemesterSubjectEvaluation(student, latestAcademic, currentSem, subjectAttendances);
 
     return res.status(200).json({
       success: true,
@@ -228,6 +238,7 @@ const getStudentAcademic = async (req, res) => {
       academicPerformance: records[0]?.defaulter_flag ? 'Needs Guidance' : 'Good Progress'
     });
   } catch (err) {
+    logger.error('Error fetching academic records:', err);
     return res.status(500).json({ success: false, message: 'Server error fetching academic records' });
   }
 };
@@ -341,17 +352,19 @@ const addStudentActivity = async (req, res) => {
 
     let savedEvidenceUrl = evidence_url || 'certificate.pdf';
 
-    // Handle Certificate File Upload (PDF, PNG, JPEG with max 25KB limit)
+    // Handle Certificate File Upload (PDF, PNG, JPEG with max 1 MB limit)
     if (file_data) {
       const parts = file_data.split(',');
       const base64Str = parts.length > 1 ? parts[1] : parts[0];
       const buffer = Buffer.from(base64Str, 'base64');
 
-      // Strict 25KB file size validation (25 * 1024 bytes = 25600 bytes)
-      if (buffer.length > 25600) {
+      // Strict 1 MB file size validation (1024 * 1024 bytes = 1048576 bytes)
+      const MAX_FILE_SIZE = 1024 * 1024;
+      if (buffer.length > MAX_FILE_SIZE) {
+        const sizeFormatted = (buffer.length / (1024 * 1024)).toFixed(2);
         return res.status(400).json({
           success: false,
-          message: `File size is ${(buffer.length / 1024).toFixed(1)} KB, which exceeds the maximum allowed limit of 25 KB.`
+          message: `File size is ${sizeFormatted} MB, which exceeds the maximum allowed limit of 1 MB.`
         });
       }
 
@@ -494,6 +507,17 @@ const getStudentCompleteReport = async (req, res) => {
     const meetings = student.batch_id ? await db.query('SELECT * FROM meetings WHERE batch_id = ? ORDER BY meeting_date DESC', [student.batch_id]) : [];
     const complaints = await db.query('SELECT * FROM complaints WHERE student_id = ? ORDER BY created_at DESC', [student.id]);
 
+    const subjectAttendances = await db.query('SELECT * FROM student_subject_attendance WHERE student_id = ?', [student.id]);
+    const currentSem = student.semester || (academicRecords[0] ? academicRecords[0].semester : 5);
+    const latestAcademic = academicRecords.find(ar => ar.semester === currentSem) || academicRecords[0] || {
+      attendance_percentage: 85.0,
+      cgpa: 8.0,
+      ise_marks: 20.0,
+      mse_marks: 25.0,
+      ese_marks: 60.0
+    };
+    const subjectMarks = getSemesterSubjectEvaluation(student, latestAcademic, currentSem, subjectAttendances);
+
     const report = {
       generatedAt: new Date().toISOString(),
       studentInfo: {
@@ -519,7 +543,7 @@ const getStudentCompleteReport = async (req, res) => {
         records: academicRecords,
         overallAttendance: academicRecords[0]?.attendance_percentage || 82.45,
         overallCgpa: academicRecords[0]?.cgpa || 7.50,
-        subjectMarks: getStudentSubjectMarks(student, academicRecords[0])
+        subjectMarks: subjectMarks
       },
       meetings,
       activities,

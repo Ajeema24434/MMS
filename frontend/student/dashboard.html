@@ -615,12 +615,12 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                        Certificate Evidence File (PDF, PNG, JPEG — Max 25 KB) *
+                        Certificate Evidence File (PDF, PNG, JPEG — Max 1 MB) *
                     </label>
                     <input type="file" id="act-file" accept=".pdf, .png, .jpg, .jpeg, application/pdf, image/png, image/jpeg" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-slate-50 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer">
                     <div class="flex items-center justify-between text-[11px] mt-1 text-slate-500 font-mono">
                         <span>Formats: PDF, PNG, JPEG</span>
-                        <span id="act-file-size-indicator">Max Size: 25 KB</span>
+                        <span id="act-file-size-indicator">Max Size: 1 MB</span>
                     </div>
                     <p id="act-file-error" class="text-xs text-rose-600 font-bold mt-1 hidden"></p>
                 </div>
@@ -795,23 +795,27 @@
             }
         });
 
-        // Certificate File Selection & 25KB Validation
+        // Certificate File Selection & 1 MB Validation
+        const MAX_CERT_SIZE_BYTES = 1024 * 1024; // 1 MB
         document.getElementById('act-file').addEventListener('change', (e) => {
             const file = e.target.files[0];
             const errEl = document.getElementById('act-file-error');
             const indEl = document.getElementById('act-file-size-indicator');
             if (!file) return;
 
-            const sizeKb = (file.size / 1024).toFixed(1);
-            if (file.size > 25 * 1024) {
-                errEl.textContent = `Selected file is ${sizeKb} KB. Maximum allowed size is 25 KB!`;
+            const sizeFormatted = file.size >= 1024 * 1024
+                ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+                : `${(file.size / 1024).toFixed(1)} KB`;
+
+            if (file.size > MAX_CERT_SIZE_BYTES) {
+                errEl.textContent = `Selected file is ${sizeFormatted}. Maximum allowed size is 1 MB!`;
                 errEl.classList.remove('hidden');
                 e.target.value = '';
-                indEl.textContent = `${sizeKb} KB (Too large!)`;
+                indEl.textContent = `${sizeFormatted} (Too large!)`;
                 indEl.className = 'text-rose-600 font-bold';
             } else {
                 errEl.classList.add('hidden');
-                indEl.textContent = `${sizeKb} KB / 25 KB (Valid)`;
+                indEl.textContent = `${sizeFormatted} / 1 MB (Valid)`;
                 indEl.className = 'text-emerald-600 font-bold';
             }
         });
@@ -837,13 +841,16 @@
             const file = fileInput.files[0];
 
             if (!file) {
-                alert('Please select a certificate file (PDF, PNG, or JPEG up to 25KB).');
+                alert('Please select a certificate file (PDF, PNG, or JPEG up to 1 MB).');
                 if (submitBtn) submitBtn.disabled = false;
                 return;
             }
 
-            if (file.size > 25 * 1024) {
-                alert(`File size (${(file.size / 1024).toFixed(1)} KB) exceeds the 25 KB limit! Please choose a smaller file.`);
+            if (file.size > MAX_CERT_SIZE_BYTES) {
+                const sizeFormatted = file.size >= 1024 * 1024
+                    ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+                    : `${(file.size / 1024).toFixed(1)} KB`;
+                alert(`File size (${sizeFormatted}) exceeds the 1 MB limit! Please choose a smaller file.`);
                 if (submitBtn) submitBtn.disabled = false;
                 return;
             }
@@ -866,7 +873,7 @@
                         closeActivityModal();
                         document.getElementById('activity-form').reset();
                         document.getElementById('act-custom-category-group').classList.add('hidden');
-                        document.getElementById('act-file-size-indicator').textContent = 'Max Size: 25 KB';
+                        document.getElementById('act-file-size-indicator').textContent = 'Max Size: 1 MB';
                         document.getElementById('act-file-size-indicator').className = '';
                         await loadStudentDashboardData();
                     } else {
